@@ -9,7 +9,7 @@ class Task(models.Model):
     end_time = models.DateField(null=True)
     address = models.CharField(max_length=200, default='')
 
-    # TODO: better way to store this?
+    # lat long delivery coordinates
     latitude = models.CharField(max_length=50, default='')
     longitude = models.CharField(max_length=50, default='')
 

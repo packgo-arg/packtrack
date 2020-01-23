@@ -7,5 +7,15 @@ class TaskSerializer(serializers.ModelSerializer):
             'id',
             'title',
             'description',
+            'assignee',
+            'start_time',
+            'end_time',
+            'address',
+            'latitude',
+            'longitude',
+            'delay',
+            'duration',
+            'request_id',
+            'accidental_delivery_duration'
         )
         model = Task
