@@ -8,6 +8,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'title',
             'description',
             'assignee',
+            'created_at',
             'start_time',
             'end_time',
             'address',

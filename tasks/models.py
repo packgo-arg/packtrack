@@ -1,22 +1,24 @@
 from django.db import models
 
 class Task(models.Model):
-    title = models.CharField(max_length=200, default='')
-    description = models.TextField(default='')
-    assignee = models.TextField(default='')
+    # required fields
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    request_id = models.IntegerField()
 
-    start_time = models.DateField(auto_now_add=True, null=True)
+    address = models.CharField(max_length=200)
+    latitude = models.CharField(max_length=50)
+    longitude = models.CharField(max_length=50)
+
+    # internal
+    created_at = models.DateField(auto_now_add=True)
+    start_time = models.DateField(null=True)
     end_time = models.DateField(null=True)
-    address = models.CharField(max_length=200, default='')
 
-    # lat long delivery coordinates
-    latitude = models.CharField(max_length=50, default='')
-    longitude = models.CharField(max_length=50, default='')
-
-    delay = models.IntegerField(default=0)
-    duration = models.IntegerField(default=0)
-    request_id = models.IntegerField(default=0)
-    accidental_delivery_duration = models.IntegerField(default=0)
+    assignee = models.TextField(null=True)
+    delay = models.IntegerField(null=True)
+    duration = models.IntegerField(null=True)
+    accidental_delivery_duration = models.IntegerField(null=True)
 
     def __str__(self):
         """A string representation of the model."""
