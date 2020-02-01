@@ -12,10 +12,15 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 import os
 import django_heroku
+import dj_database_url
+import dotenv
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+dotenv_file = os.path.join(BASE_DIR, ".env")
+if os.path.isfile(dotenv_file):
+    dotenv.load_dotenv(dotenv_file)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
@@ -26,7 +31,7 @@ SECRET_KEY = 'ql^c7h8$$$l_yv2=_=-(he09pnos#b%3uv#7s(++!_jz4qw(k+'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1','.herokuapp.com','packgo.com.ar']
 
 
 # Application definition
@@ -47,6 +52,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -107,16 +113,21 @@ WSGI_APPLICATION = 'api.wsgi.application'
 
 #Changed DB to use POSTGRESQL. """ GENERATE NEW DB USER AND PASS FOR PROD USE """
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'packtrack',
-        'USER': 'postgres',
-        'PASSWORD': 'wa7daf4k',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
-    }
-}
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#        'NAME': 'packtrack',
+#        'USER': 'postgres',
+#        'PASSWORD': 'wa7daf4k',
+#        'HOST': '127.0.0.1',
+#        'PORT': '5432',
+#    }
+#}
+
+#ADDED DB LINK TO HEROKU POSTGRESQL
+
+DATABASES = {}
+DATABASES['default'] = dj_database_url.config(conn_max_age=600)
 
 
 # Password validation
@@ -156,7 +167,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 django_heroku.settings(locals())
-
+del DATABASES['default']['OPTIONS']['sslmode']
