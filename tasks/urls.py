@@ -3,6 +3,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.ListTask),
-    path('<int:pk>/', views.DetailTask),
+    path('', views.TaskList.as_view()),
+    path('<int:pk>/', views.TaskDetail.as_view()),
 ]

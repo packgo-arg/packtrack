@@ -1,54 +1,69 @@
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
+from django.http import Http404
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 
-from .models import Task
+from .models import *
 from .serializers import TaskSerializer
 
-class DetailTask(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Task.objects.all()
-    serializer_class = TaskSerializer
 
-@api_view(['GET', 'POST'])
-def ListTask(request):
+class TaskList(APIView):
     """
     List all tasks, or create a new task.
     """
-    if request.method == 'GET':
+    def get (self, request, format=None):
         tasks = Task.objects.all()
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data)
 
-    elif request.method == 'POST':
+    def post(self, request, format=None):
         serializer = TaskSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def DetailTask(request, pk):
+class  TaskDetail(APIView):
     """
     Retrieve, update or delete a task.
     """
-    try:
-        task = Task.objects.get(pk=pk)
-    except Task.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+    def get_object(self, pk):
 
-    if request.method == 'GET':
-        serializer = TaskSerializer(task)
-        return Response(serializer.data)
+        try:
+            task = Task.objects.get(pk=pk)
+            return task
+        except Task.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
-    elif request.method == 'PUT':
-        serializer = TaskSerializer(task, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
+    def get(self, request, pk, format_=None):
+
+        try:
+            task = Task.objects.get(pk=pk)
+            serializer = TaskSerializer(task)
             return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Task.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
-    elif request.method == 'DELETE':
-        task.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def put(self, request, pk, format=None):
+
+        try:
+            task = Task.objects.get(pk=pk)
+            serializer = TaskSerializer(task, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Task.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, pk, format=None):
+
+        try:
+            task = Task.objects.get(pk=pk)
+            task.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Task.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)

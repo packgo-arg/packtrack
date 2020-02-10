@@ -14,5 +14,6 @@ whitenoise = "*"
 dj-database-url = "*"
 django-heroku = "*"
 python-dotenv = "*"
+django-rest-swagger = "*"
 
 [dev-packages]
