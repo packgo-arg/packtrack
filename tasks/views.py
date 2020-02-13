@@ -24,9 +24,10 @@ class TaskList(APIView):
 
     def post(self, request, format=None):
         serializer = TaskSerializer(data=request.data)
-        st = calc_start_time(timezone.now())
         if serializer.is_valid():
-            serializer.save(start_time=st)
+            st = calc_start_time(timezone.now())
+            et, dur = calc_end_time(st, serializer.validated_data['origins']['pos_code'], serializer.validated_data['destinations']['pos_code'])
+            serializer.save(start_time=st, end_time=et, duration=dur)
             return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
