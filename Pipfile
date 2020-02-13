@@ -16,5 +16,6 @@ django-heroku = "*"
 python-dotenv = "*"
 django-rest-swagger = "*"
 pandas = "*"
+xlrd = "*"
 
 [dev-packages]
