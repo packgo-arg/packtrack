@@ -8,6 +8,9 @@ from rest_framework.permissions import AllowAny
 
 from .models import *
 from .serializers import TaskSerializer
+from .lib.pg_library import *
+from datetime import datetime, timezone, timedelta
+from django.utils import timezone
 
 
 class TaskList(APIView):
@@ -21,8 +24,9 @@ class TaskList(APIView):
 
     def post(self, request, format=None):
         serializer = TaskSerializer(data=request.data)
+        st = calc_start_time(timezone.now())
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(start_time=st)
             return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

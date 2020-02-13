@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import *
 
 
+
+
 class OriginSerializer(serializers.ModelSerializer):
     class Meta:
         model = Origin
@@ -53,7 +55,7 @@ class TaskSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         origin_data = validated_data.pop('origins')
-        dest_data = validated_data.pop('destinations')
+        dest_data = validated_data.pop('destinations')        
         task = Task.objects.create(**validated_data)
         origin = Origin.objects.create(task=task, **origin_data)
         destination = Destination.objects.create(task=task, **dest_data)
@@ -67,3 +69,4 @@ class TaskSerializer(serializers.ModelSerializer):
        new_task, _ = Task.objects.get(id=task.id, defaults=validated_data)
 
        return new_task
+

@@ -15,5 +15,6 @@ dj-database-url = "*"
 django-heroku = "*"
 python-dotenv = "*"
 django-rest-swagger = "*"
+pandas = "*"
 
 [dev-packages]
