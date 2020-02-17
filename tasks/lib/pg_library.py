@@ -30,8 +30,8 @@ def calc_end_time(st, cpo, cpd):
 	cparg = pd.read_excel('./tasks/lib/CP_Argentina.xlsx')
 	cparg.drop(['cod_descripcion'], axis=1, inplace=True)
 
-	a = cparg.loc[cparg['cod']==4700, 'cod_provincia'].iloc[0]
-	b = cparg.loc[cparg['cod']==5000, 'cod_provincia'].iloc[0]
+	a = cparg.loc[cparg['cod']==cpo, 'cod_provincia'].iloc[0]
+	b = cparg.loc[cparg['cod']==cpd, 'cod_provincia'].iloc[0]
 	r = int(crosst.loc[a, b])
 	et = st + timedelta(hours=r)
 	return et, r
