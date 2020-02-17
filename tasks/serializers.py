@@ -28,13 +28,13 @@ class DestinationSerializer(serializers.ModelSerializer):
             'pos_code'
             )
 
-class TaskSerializer(serializers.ModelSerializer):
+class OrderSerializer(serializers.ModelSerializer):
 
     origins = OriginSerializer()
     destinations = DestinationSerializer()
 
     class Meta:
-        model = Task
+        model = Order
         fields = (
             'id',
             'client_id',
@@ -56,17 +56,17 @@ class TaskSerializer(serializers.ModelSerializer):
 
         origin_data = validated_data.pop('origins')
         dest_data = validated_data.pop('destinations')        
-        task = Task.objects.create(**validated_data)
-        origin = Origin.objects.create(task=task, **origin_data)
-        destination = Destination.objects.create(task=task, **dest_data)
+        order = Order.objects.create(**validated_data)
+        origin = Origin.objects.create(order=order, **origin_data)
+        destination = Destination.objects.create(order=order, **dest_data)
 
-        return task
+        return order
 
     def get_object(self, instance, validated_data):
 
        origin, _ = Origin.objects.get(id=instance.origin.id, defaults=validated_data.pop('origins'))
        destination, _ = Destination.objects.get(id=instance.destination.id, defaults=validated_data.pop('destinations'))
-       new_task, _ = Task.objects.get(id=task.id, defaults=validated_data)
+       new_order, _ = Order.objects.get(id=order.id, defaults=validated_data)
 
-       return new_task
+       return new_order
 

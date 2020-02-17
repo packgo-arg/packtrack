@@ -1,6 +1,6 @@
 from django.db import models
 
-class Task(models.Model):
+class Order(models.Model):
     # required fields
     title = models.CharField(max_length=200)
     description = models.TextField()
@@ -24,7 +24,7 @@ class Task(models.Model):
 
 class Origin(models.Model):
 
-    task = models.OneToOneField(Task, related_name='origins', on_delete=models.CASCADE)
+    order = models.OneToOneField(Order, related_name='origins', on_delete=models.CASCADE)
     name = models.CharField(max_length=200, null=False)
     address = models.CharField(max_length=200)
     city = models.CharField(max_length=200)
@@ -38,7 +38,7 @@ class Origin(models.Model):
 
 class Destination(models.Model):
 
-    task = models.OneToOneField(Task, related_name='destinations', on_delete=models.CASCADE)
+    order = models.OneToOneField(Order, related_name='destinations', on_delete=models.CASCADE)
     name = models.CharField(max_length=200, null=False)
     address = models.CharField(max_length=200)
     city = models.CharField(max_length=200)

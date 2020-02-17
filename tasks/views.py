@@ -7,23 +7,23 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 
 from .models import *
-from .serializers import TaskSerializer
+from .serializers import OrderSerializer
 from .lib.pg_library import *
 from datetime import datetime, timezone, timedelta
 from django.utils import timezone
 
 
-class TaskList(APIView):
+class OrderList(APIView):
     """
     List all tasks, or create a new task.
     """
     def get (self, request, format=None):
-        tasks = Task.objects.all()
-        serializer = TaskSerializer(tasks, many=True)
+        orders = Order.objects.all()
+        serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        serializer = TaskSerializer(data=request.data)
+        serializer = OrderSerializer(data=request.data)
         if serializer.is_valid():
             st = calc_start_time(timezone.now())
             et, dur = calc_end_time(st, serializer.validated_data['origins']['pos_code'], serializer.validated_data['destinations']['pos_code'])
@@ -31,44 +31,44 @@ class TaskList(APIView):
             return Response(status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class  TaskDetail(APIView):
+class  OrderDetail(APIView):
     """
-    Retrieve, update or delete a task.
+    Retrieve, update or delete an order.
     """
     def get_object(self, pk):
 
         try:
-            task = Task.objects.get(pk=pk)
-            return task
-        except Task.DoesNotExist:
+            order = Order.objects.get(pk=pk)
+            return order
+        except Order.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
     def get(self, request, pk, format_=None):
 
         try:
-            task = Task.objects.get(pk=pk)
-            serializer = TaskSerializer(task)
+            order = Order.objects.get(pk=pk)
+            serializer = OrderSerializer(order)
             return Response(serializer.data)
-        except Task.DoesNotExist:
+        except Order.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
     def put(self, request, pk, format=None):
 
         try:
-            task = Task.objects.get(pk=pk)
-            serializer = TaskSerializer(task, data=request.data)
+            order = Order.objects.get(pk=pk)
+            serializer = OrderSerializer(order, data=request.data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Task.DoesNotExist:
+        except Order.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
     def delete(self, request, pk, format=None):
 
         try:
-            task = Task.objects.get(pk=pk)
-            task.delete()
+            order = Order.objects.get(pk=pk)
+            order.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        except Task.DoesNotExist:
+        except Order.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
