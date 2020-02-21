@@ -11,7 +11,7 @@ from .serializers import OrderSerializer
 from .lib.pg_library import *
 from datetime import datetime, timezone, timedelta
 from django.utils import timezone
-
+from django.contrib.auth.models import User
 
 class OrderList(APIView):
     """

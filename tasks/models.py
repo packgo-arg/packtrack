@@ -1,11 +1,15 @@
 from django.db import models
 
 class Order(models.Model):
+
+    CHOICES = (
+        ('PP', 'Popack'),
+    )
     # required fields
     title = models.CharField(max_length=200)
     description = models.TextField()
     request_id = models.IntegerField(null=True)
-    client_id = models.IntegerField(null=True)
+    client_id = models.CharField(max_length=2, choices=CHOICES)
     prov_id = models.IntegerField(null=True)
 
     # internal
