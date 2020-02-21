@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 
 from .models import *
-from .serializers import OrderSerializer
+from .serializers import OrderSerializer, ReturnSerializer
 from .lib.pg_library import *
 from datetime import datetime, timezone, timedelta
 from django.utils import timezone
@@ -28,7 +28,9 @@ class OrderList(APIView):
             st = calc_start_time(timezone.now())
             et, dur = calc_end_time(st, serializer.validated_data['origins']['pos_code'], serializer.validated_data['destinations']['pos_code'])
             serializer.save(start_time=st, end_time=et, duration=dur)
-            return Response(status=status.HTTP_201_CREATED)
+            retord = Order.objects.get(pk=serializer.data['id'])
+            retser = ReturnSerializer(retord)
+            return Response(retser.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class  OrderDetail(APIView):

@@ -2,7 +2,16 @@ from rest_framework import serializers
 from .models import *
 
 
-
+class ReturnSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = (
+            'id',
+            'request_id',
+            'start_time',
+            'end_time',
+            'duration',
+            )
 
 class OriginSerializer(serializers.ModelSerializer):
     class Meta:
