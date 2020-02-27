@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 django = "*"
 djangorestframework = "*"
-djangorestframework-jwt = "*"
 django-cors-headers = "*"
 psycopg2 = "*"
 gunicorn = "*"
@@ -17,5 +16,6 @@ python-dotenv = "*"
 django-rest-swagger = "*"
 pandas = "*"
 xlrd = "*"
+djangorestframework-simplejwt = "*"
 
 [dev-packages]
