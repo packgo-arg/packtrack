@@ -24,8 +24,8 @@ urlpatterns = [
     # Admin site
     path('admin/', admin.site.urls),
     # Token handlers
-    path('api/token/', jwt_views.TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     # API urls
     path('core/', include('core.urls')),
     path('api/tasks/', include('tasks.urls')),
