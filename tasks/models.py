@@ -4,6 +4,7 @@ class Order(models.Model):
 
     CHOICES = (
         ('PP', 'Popack'),
+        ('DP', 'DeliPack')
     )
     # required fields
     title = models.CharField(max_length=200)
