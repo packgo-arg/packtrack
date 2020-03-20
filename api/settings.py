@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'core.apps.CoreConfig',
-    'tasks.apps.TasksConfig'
+    'tasks.apps.TasksConfig',
+    'utils.apps.UtilsConfig'
 ]
 
 MIDDLEWARE = [

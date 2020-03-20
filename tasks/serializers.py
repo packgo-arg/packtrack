@@ -10,7 +10,7 @@ class ReturnSerializer(serializers.ModelSerializer):
             'request_id',
             'start_time',
             'end_time',
-            'duration',
+            'duration'
             )
 
 class OriginSerializer(serializers.ModelSerializer):
@@ -37,10 +37,19 @@ class DestinationSerializer(serializers.ModelSerializer):
             'pos_code'
             )
 
+class PackageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Package
+        fields = (
+            'size',
+            'quantity'
+        )
+
 class OrderSerializer(serializers.ModelSerializer):
 
     origins = OriginSerializer()
     destinations = DestinationSerializer()
+    packages = PackageSerializer()
 
     class Meta:
         model = Order
@@ -58,16 +67,19 @@ class OrderSerializer(serializers.ModelSerializer):
             'duration',
             'accidental_delivery_duration',
             'origins',
-            'destinations'
+            'destinations',
+            'packages'
         )
 
     def create(self, validated_data):
 
         origin_data = validated_data.pop('origins')
-        dest_data = validated_data.pop('destinations')        
+        dest_data = validated_data.pop('destinations')
+        pkg_data = validated_data.pop('packages')
         order = Order.objects.create(**validated_data)
         origin = Origin.objects.create(order=order, **origin_data)
         destination = Destination.objects.create(order=order, **dest_data)
+        package = Package.objects.create(order=order, **pkg_data)
 
         return order
 
