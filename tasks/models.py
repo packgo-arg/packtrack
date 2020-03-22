@@ -8,7 +8,7 @@ class Order(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     request_id = models.IntegerField(null=True)
-    client = models.ForeignKey(Client, to_field='client_code', on_delete=models.CASCADE)
+    client = models.ForeignKey(Client, to_field='client_code', on_delete=models.CASCADE, default='NA')
     provider = models.ForeignKey(Provider, to_field='prov_code', on_delete=models.SET_NULL, null=True)
 
     # internal
