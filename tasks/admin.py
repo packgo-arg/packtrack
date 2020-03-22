@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import *
+from utils.models import *
 
 class OriginItemInline(admin.TabularInline):
     model = Origin
@@ -11,7 +12,7 @@ class DestinationItemInline(admin.TabularInline):
     extra = 1
 
 class PackageItemInline(admin.TabularInline):
-    model = Package
+    model = OrderPackage
     extra = 1
 
 class OrderAdmin(admin.ModelAdmin):
@@ -28,7 +29,4 @@ class OrderAdmin(admin.ModelAdmin):
 
 admin.site.register(Order, OrderAdmin)
 
-# admin.site.register(Order)
-# admin.site.register(Origin)
-# admin.site.register(Destination)
 

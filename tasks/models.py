@@ -1,26 +1,15 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from utils.models import *
 
 class Order(models.Model):
-
-    CL_LIST = (
-        ('PP', 'Popack'),
-        ('DP', 'DeliPack'),
-        ('GF', 'GoFriz')
-    )
-
-    CL_LIST = (
-        ('PP', 'Popack'),
-        ('DP', 'DeliPack'),
-        ('GF', 'GoFriz')
-    )
 
     # required fields
     title = models.CharField(max_length=200)
     description = models.TextField()
     request_id = models.IntegerField(null=True)
-    client_id = models.CharField(max_length=2, choices=CL_LIST)
-    prov_id = models.CharField(max_length=2, choices=PV_LIST)
+    client = models.ForeignKey(Client, to_field='client_code', on_delete=models.CASCADE)
+    provider = models.ForeignKey(Provider, to_field='prov_code', on_delete=models.SET_NULL, null=True)
 
     # internal
     created_at = models.DateTimeField(auto_now_add=True)
@@ -32,9 +21,9 @@ class Order(models.Model):
     duration = models.IntegerField(null=True)
     accidental_delivery_duration = models.IntegerField(null=True)
 
-    def __int__(self):
+    def __str__(self):
         """A string representation of the model."""
-        return self.id
+        return self.title
 
 class Origin(models.Model):
 
@@ -64,18 +53,10 @@ class Destination(models.Model):
         """A string representation of the model."""
         return self.id
 
-class Package(models.Model):
+class OrderPackage(models.Model):
 
-    PK_SIZE = (
-        ('01', 'Sobre'),
-        ('02', 'Caja pequeña'),
-        ('03', 'Caja mediana'),
-        ('04', 'Caja grande'),
-        ('05', 'Pallet')
-    )
-
-    order = models.OneToOneField(Order, related_name='packages',on_delete=models.CASCADE)
-    size = models.CharField(max_length=2, choices=PK_SIZE)
+    order = models.ForeignKey(Order, related_name='packages', on_delete=models.CASCADE)
+    size = models.ForeignKey(Package, to_field='pkg_code', on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(99)])
 
     def __int__(self):
