@@ -15,17 +15,26 @@ class PackageItemInline(admin.TabularInline):
     model = OrderPackage
     extra = 1
 
+class OrderStatusInline(admin.TabularInline):
+    model = OrderStatus
+    readonly_fields = ['st_update']
+    extra = 1
+
 class OrderAdmin(admin.ModelAdmin):
 
-    readonly_fields = ['id', 'created_at']
+    model = Order
+    fieldsets = (('TITULO', {'fields': ('id', 'title', 'description',)}),
+                 ('TIEMPO', {'fields': ('created_at', 'start_time', 'end_time', 'duration')}),
+                 ('CLIENTE', {'fields': ('client', 'request_id',)}),
+                 )
+    readonly_fields = ['id', 'created_at', 'client', 'request_id']
     #list of fields to display in django admin
     list_display = ['title','created_at']
 
     #if you want django admin to show the search bar, just add this line
     #search_fields = ['created_at']
 
-    inlines = (OriginItemInline, DestinationItemInline, PackageItemInline,)
-
+    inlines = (OriginItemInline, DestinationItemInline, PackageItemInline, OrderStatusInline,)
 
 admin.site.register(Order, OrderAdmin)
 

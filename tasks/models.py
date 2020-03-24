@@ -9,7 +9,7 @@ class Order(models.Model):
     description = models.TextField()
     request_id = models.IntegerField(null=True)
     client = models.ForeignKey(Client, to_field='client_code', on_delete=models.CASCADE, default='NA')
-    provider = models.ForeignKey(Provider, to_field='prov_code', on_delete=models.SET_NULL, null=True)
+    provider = models.ForeignKey(Provider, to_field='prov_code', on_delete=models.SET_DEFAULT, default='PG')
 
     # internal
     created_at = models.DateTimeField(auto_now_add=True)
@@ -18,7 +18,7 @@ class Order(models.Model):
 
 #    assignee = models.TextField(null=True)
     delay = models.IntegerField(null=True)
-    duration = models.IntegerField(null=True)
+    duration = models.CharField(max_length=8, null=True)
     accidental_delivery_duration = models.IntegerField(null=True)
 
     def __str__(self):
@@ -61,3 +61,19 @@ class OrderPackage(models.Model):
 
     def __int__(self):
         return self.id
+
+class OrderStatus(models.Model):
+    STATUS_CH = [
+        ('01', 'En Proceso'),
+        ('02', 'En Colecta'),
+        ('03', 'En Centro de distribucion'),
+        ('04', 'En Transito'),
+        ('05', 'En Entrega'),
+        ('06', 'Demorado'),
+        ('07', 'Cancelado'),
+        ]
+    order = models.ForeignKey(Order, related_name='ord_status', on_delete=models.CASCADE)
+    status = models.CharField(max_length=2, choices=STATUS_CH, default='01')
+    provider = models.ForeignKey(Provider, to_field='prov_code', on_delete=models.SET_DEFAULT, default='PG')
+    description = models.CharField(max_length=150, null=True)
+    st_update = models.DateTimeField(auto_now_add=True)

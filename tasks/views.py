@@ -25,11 +25,10 @@ class OrderList(APIView):
     def post(self, request, format=None):
         serializer = OrderSerializer(data=request.data)
         if serializer.is_valid():
-            st = calc_start_time(timezone.now())
-            et, dur = calc_end_time(st, serializer.validated_data['origins']['pos_code'], serializer.validated_data['destinations']['pos_code'])
+            st, et, dur = calc_time(timezone.now(), serializer.validated_data['origins']['pos_code'], serializer.validated_data['destinations']['pos_code'])
             serializer.save(start_time=st, end_time=et, duration=dur)
-            retord = Order.objects.get(pk=serializer.data['id'])
-            retser = ReturnSerializer(retord)
+            OrderStatus(order_id = Order.objects.get(pk=serializer.data['id']).pk).save()
+            retser = ReturnSerializer(Order.objects.get(pk=serializer.data['id']))
             return Response(retser.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
