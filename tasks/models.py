@@ -71,9 +71,10 @@ class OrderStatus(models.Model):
         ('05', 'En Entrega'),
         ('06', 'Demorado'),
         ('07', 'Cancelado'),
+        ('08', 'Entregado'),
         ]
     order = models.ForeignKey(Order, related_name='ord_status', on_delete=models.CASCADE)
-    status = models.CharField(max_length=2, choices=STATUS_CH, default='01')
-    provider = models.ForeignKey(Provider, to_field='prov_code', on_delete=models.SET_DEFAULT, default='PG')
+    status = models.CharField(max_length=2, choices=STATUS_CH)
+    provider = models.ForeignKey(Provider, to_field='prov_code', on_delete=models.CASCADE, null=True)
     description = models.CharField(max_length=150, null=True)
     st_update = models.DateTimeField(auto_now_add=True)

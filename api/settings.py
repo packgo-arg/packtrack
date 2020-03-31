@@ -49,7 +49,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'core.apps.CoreConfig',
     'tasks.apps.TasksConfig',
-    'utils.apps.UtilsConfig'
+    'utils.apps.UtilsConfig',
+    'landing.apps.LandingConfig'
 ]
 
 MIDDLEWARE = [
