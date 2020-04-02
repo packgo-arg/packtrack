@@ -73,8 +73,17 @@ class OrderStatus(models.Model):
         ('07', 'Cancelado'),
         ('08', 'Entregado'),
         ]
+
+    LOC_CH = [
+        ('01', 'Capital Federal'),
+        ('02', 'Buenos Aires'),
+        ('03', 'Cordoba'),
+        ('04', 'Rosario'),
+        ]
+
     order = models.ForeignKey(Order, related_name='ord_status', on_delete=models.CASCADE)
     status = models.CharField(max_length=2, choices=STATUS_CH)
     provider = models.ForeignKey(Provider, to_field='prov_code', on_delete=models.CASCADE, null=True)
+    location = models.CharField(max_length=2, choices=LOC_CH, null=True)
     description = models.CharField(max_length=150, null=True)
     st_update = models.DateTimeField(auto_now_add=True)
