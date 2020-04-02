@@ -72,9 +72,9 @@
         <div class="container">
           <div class="row align-items-center position-relative">
 
-
             <div class="site-logo">
-              <a href="index.html" class="text-black"><span class="text-primary">PACK GO</a>
+              <a href="#"><img src="{% static 'landing/images/Logo_PackGO_mini.png' %}" alt="Image"><a/>
+              <!--<a href="index.html" class="text-black"><span class="text-primary">PACK GO</a>-->
             </div>
 
             <div class="col-12">
@@ -101,7 +101,7 @@
       </header>
 
       <div class="ftco-blocks-cover-1">
-        <div class="ftco-cover-1 overlay" style="background-image: url('{% static 'landing/images/Logo_PackGO_1.png' %}')">
+        <div class="ftco-cover-1 overlay" style="background-image: url('{% static 'landing/images/fondo_2.jpg' %}')">
           <div class="container">
             <div class="row align-items-center">
               <div class="col-lg-6">
@@ -177,13 +177,10 @@
 
       <div class="site-section bg-light" id="about-section">
         <div class="container">
-          <div class="row justify-content-center mb-4 block-img-video-1-wrap">
+          <div class="row justify-content-center">
             <div class="col-md-12 mb-5">
               <figure class="block-img-video-1" data-aos="fade">
-                <a href="https://vimeo.com/45830194" data-fancybox data-ratio="2">
-                <span class="icon"><span class="icon-play"></span></span>
-                <img src="{% static 'landing/images/cargo_delivery_big.jpg' %}" alt="Image" class="img-fluid">
-              </a>
+                <img src="{% static 'landing/images/fondo_3.png' %}" alt="Image">
               </figure>
             </div>
           </div>
@@ -234,7 +231,7 @@
           <div class="owl-carousel owl-all">
             <div class="block-team-member-1 text-center rounded h-100">
               <figure>
-                <img src="{% static 'landing/images/person_1.jpg' %}" alt="Image" class="img-fluid rounded-circle">
+                <img src="{% static 'landing/images/marcos.png' %}" alt="Image" class="img-fluid rounded-circle">
               </figure>
               <h3 class="font-size-20 text-black">Marcos Heyd</h3>
               <span class="d-block font-gray-5 letter-spacing-1 text-uppercase font-size-12 mb-3">Co-Founder & CEO</span>
@@ -248,7 +245,7 @@
 
             <div class="block-team-member-1 text-center rounded h-100">
               <figure>
-                <img src="{% static 'landing/images/person_2.jpg' %}" alt="Image" class="img-fluid rounded-circle">
+                <img src="{% static 'landing/images/lucio.png' %}" alt="Image" class="img-fluid rounded-circle">
               </figure>
               <h3 class="font-size-20 text-black">Lucio Fernandez</h3>
               <span class="d-block font-gray-5 letter-spacing-1 text-uppercase font-size-12 mb-3">Co-Founder</span>
@@ -262,7 +259,7 @@
 
             <div class="block-team-member-1 text-center rounded h-100">
               <figure>
-                <img src="{% static 'landing/images/person_3.jpg' %}" alt="Image" class="img-fluid rounded-circle">
+                <img src="{% static 'landing/images/nacho.png' %}" alt="Image" class="img-fluid rounded-circle">
               </figure>
               <h3 class="font-size-20 text-black">Ignacio Grosso</h3>
               <span class="d-block font-gray-5 letter-spacing-1 text-uppercase font-size-12 mb-3">Partner & CTO</span>
@@ -283,7 +280,7 @@
         <div class="container">
           <div class="row d-flex no-gutters align-items-stretch">
 
-            <div class="col-12 col-lg-6 block__73422 order-lg-2" style="background-image: url('{% static 'landing/images/cargo_sea_small.jpg' %}');" data-aos="fade-left" data-aos-delay="">
+            <div class="col-12 col-lg-6 block__73422 order-lg-2" style="background-image: url('{% static 'landing/images/fondo_3.png' %}');" data-aos="fade-left" data-aos-delay="">
             </div>
 
 
@@ -321,12 +318,8 @@
             <div>
               <div class="block-testimony-1 text-center">
 
-                <blockquote class="mb-4">
-                  <p>&ldquo;Comentario de Walmart.&rdquo;</p>
-                </blockquote>
-
                 <figure>
-                  <img src="{% static 'landing/images/person_4.jpg' %}" alt="Image" class="img-fluid rounded-circle mx-auto">
+                  <img src="{% static 'landing/images/walmart.png' %}" alt="Image" class="img-fluid mx-auto">
                 </figure>
                 <h3 class="font-size-20 text-black">Walmart</h3>
               </div>
@@ -334,11 +327,9 @@
 
             <div>
               <div class="block-testimony-1 text-center">
-                <blockquote class="mb-4">
-                  <p>&ldquo;Comentario de Disco.&rdquo;</p>
-                </blockquote>
+
                 <figure>
-                  <img src="{% static 'landing/images/person_2.jpg' %}" alt="Image" class="img-fluid rounded-circle mx-auto">
+                  <img src="{% static 'landing/images/disco.png' %}" alt="Image" class="img-fluid mx-auto">
                 </figure>
                 <h3 class="font-size-20 mb-4 text-black">Disco</h3>
 
@@ -348,13 +339,8 @@
             <div>
               <div class="block-testimony-1 text-center">
 
-
-                <blockquote class="mb-4">
-                  <p>&ldquo;Comentario de Electrolux.&rdquo;</p>
-                </blockquote>
-
                 <figure>
-                  <img src="{% static 'landing/images/person_1.jpg' %}" alt="Image" class="img-fluid rounded-circle mx-auto">
+                  <img src="{% static 'landing/images/electrolux.png' %}" alt="Image" class="img-fluid mx-auto">
                 </figure>
                 <h3 class="font-size-20 text-black">Electrolux</h3>
 
@@ -364,14 +350,21 @@
 
             <div>
               <div class="block-testimony-1 text-center">
-                <blockquote class="mb-4">
-                  <p>&ldquo;Comentario de Mercado Libre.&rdquo;</p>
-                </blockquote>
 
                 <figure>
-                  <img src="{% static 'landing/images/person_3.jpg' %}" alt="Image" class="img-fluid rounded-circle mx-auto">
+                  <img src="{% static 'landing/images/gofriz.png' %}" alt="Image" class="img-fluid mx-auto">
                 </figure>
-                <h3 class="font-size-20 mb-4 text-black">Mercado Libre</h3>
+                <h3 class="font-size-20 mb-4 text-black">GoFriz</h3>
+
+              </div>
+            </div>
+            <div>
+              <div class="block-testimony-1 text-center">
+
+                <figure>
+                  <img src="{% static 'landing/images/popack.png' %}" alt="Image" class="img-fluid mx-auto">
+                </figure>
+                <h3 class="font-size-20 mb-4 text-black">Popack</h3>
 
               </div>
             </div>
