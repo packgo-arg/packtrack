@@ -183,4 +183,5 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 sys.path.append(os.path.join(PROJECT_ROOT, 'tasks/lib'))
 django_heroku.settings(locals())
-del DATABASES['default']['OPTIONS']['sslmode']
+if not ENV:
+    del DATABASES['default']['OPTIONS']['sslmode']
