@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 
 from .models import *
-from .serializers import OrderSerializer, ReturnSerializer
+from .serializers import OrderSerializer, ReturnSerializer, OrderStatusSerializer
 from .lib.pg_library import *
 from datetime import datetime, timezone, timedelta
 from django.utils import timezone
@@ -73,3 +73,26 @@ class  OrderDetail(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Order.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+class  StatusDetail(APIView):
+    """
+    Retrieve, update or delete an order.
+    """
+    def get_object(self, order):
+
+        try:
+            order_status = OrderStatus.objects.filter(order=order).last()
+            return order_status
+        except OrderStatus.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    def get(self, request, format_=None):
+        try:
+            if Order.objects.get(pk=request.data['order']).client_id == request.data['client']:
+                order_status = OrderStatus.objects.filter(order_id=request.data['order']).last()
+                serializer = OrderStatusSerializer(order_status)
+                return Response(serializer.data)
+            else:
+                return Response({"Fail": "Client ID does not match with Order"}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({"Fail": "Order not found"}, status=status.HTTP_404_NOT_FOUND)

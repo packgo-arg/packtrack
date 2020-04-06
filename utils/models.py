@@ -3,11 +3,38 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
 
 # Create your models here.
+
+class Package(models.Model):
+    pkg_name = models.CharField(max_length=100, unique=True)
+    pkg_code = models.CharField(max_length=2, unique=True)
+    pkg_description = models.CharField(max_length=100, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.pkg_name
+
+class Status(models.Model):
+    status_name = models.CharField(max_length=100, unique=True)
+    status_desc = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.status_name
+
+class State(models.Model):
+    state_name = models.CharField(max_length=100, unique=True)
+    latitude = models.CharField(max_length=15, null=True, blank=True)
+    longitude = models.CharField(max_length=15, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.state_name
+
 class Provider(models.Model):
     # required fields
-    prov_name = models.CharField(max_length=200)
+    prov_name = models.CharField(max_length=200, unique=True)
     prov_code = models.CharField(max_length=2, unique=True)
-    city_code = models.IntegerField(null=True)
+    state_code = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -17,24 +44,14 @@ class Provider(models.Model):
 
 class Client(models.Model):
     # required fields
-    client_name = models.CharField(max_length=100)
+    client_name = models.CharField(max_length=100, unique=True)
     client_code = models.CharField(max_length=2, unique=True)
-    city_code = models.IntegerField(null=True)
+    state_code = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         """A string representation of the model."""
         return self.client_name
-
-
-class Package(models.Model):
-    pkg_name = models.CharField(max_length=100)
-    pkg_code = models.CharField(max_length=2, unique=True)
-    pkg_description = models.CharField(max_length=100, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.pkg_name
 
 class MyAccountManager(BaseUserManager):
 

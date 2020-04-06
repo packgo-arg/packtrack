@@ -40,7 +40,7 @@ class OrderAdmin(admin.ModelAdmin):
     readonly_fields = ['id', 'created_at', 'client', 'request_id']
 
     #list of fields to display in django admin
-    list_display = ('title','created_at', 'client')
+    list_display = ('title','id','client','created_at')
 
     #if you want django admin to show the search bar, just add this line
     #search_fields = ('client','created_at')

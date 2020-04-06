@@ -14,13 +14,49 @@ class ReturnSerializer(serializers.ModelSerializer):
             'duration'
         )
 
+class StatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Status
+        fields = "__all__"
+
+class OrderStatusSerializer(serializers.ModelSerializer):
+
+    status = serializers.SerializerMethodField()
+    location = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderStatus
+        fields = (
+            'order',
+            'status',
+            'location',
+            'description',
+            'st_update'
+        )
+
+    def get_status(self, obj):
+        try:
+            status_inst = Status.objects.get(pk=obj.status_id)
+            return status_inst.status_name
+        except Status.DoesNotExist:
+            return print('ERROR STATUS')
+
+    def get_location(self, obj):
+        try:
+            location_inst = State.objects.get(pk=obj.location_id)
+            return location_inst.state_name
+        except Status.DoesNotExist:
+            return print('ERROR LOCATION')
 
 class OriginSerializer(serializers.ModelSerializer):
     class Meta:
         model = Origin
         fields = (
             'name',
-            'address',
+            'street',
+            'house_num',
+            'ap_unit',
+            'suburb',
             'city',
             'latitude',
             'longitude',
@@ -33,7 +69,10 @@ class DestinationSerializer(serializers.ModelSerializer):
         model = Destination
         fields = (
             'name',
-            'address',
+            'street',
+            'house_num',
+            'ap_unit',
+            'suburb',
             'city',
             'latitude',
             'longitude',
@@ -45,7 +84,7 @@ class PackageSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderPackage
         fields = (
-            'size',
+            'pak_type',
             'quantity'
         )
 
@@ -60,7 +99,6 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'client',
-            'provider',
             'request_id',
             'title',
             'description',

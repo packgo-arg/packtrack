@@ -9,14 +9,25 @@ class ClientAdmin(admin.ModelAdmin):
 class ProvAdmin(admin.ModelAdmin):
 
     readonly_fields = ['id', 'created_at']
-    list_display = ['prov_name','created_at']
+    list_display = ['prov_name','id', 'created_at']
 
 class PkgAdmin(admin.ModelAdmin):
 
     readonly_fields = ['id', 'created_at']
-    list_display = ['pkg_name','created_at']
+    list_display = ['pkg_name','id','created_at']
 
+class StatusAdmin(admin.ModelAdmin):
+
+    readonly_fields = ['id', 'created_at']
+    list_display = ['status_name','id','status_desc','created_at']
+
+class StateAdmin(admin.ModelAdmin):
+
+    readonly_fields = ['id', 'created_at']
+    list_display = ['state_name', 'latitude', 'longitude', 'created_at']
 
 admin.site.register(Client, ClientAdmin)
 admin.site.register(Provider, ProvAdmin)
 admin.site.register(Package, PkgAdmin)
+admin.site.register(Status, StatusAdmin)
+admin.site.register(State, StateAdmin)
