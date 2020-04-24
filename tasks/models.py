@@ -28,15 +28,15 @@ class Order(models.Model):
 class Origin(models.Model):
 
     order = models.OneToOneField(Order, related_name='origins', on_delete=models.CASCADE)
-    name = models.CharField(max_length=200, null=False)
-    street = models.CharField(max_length=100, null=True)
+    name = models.CharField(max_length=200)
+    street = models.CharField(max_length=100)
     house_num = models.IntegerField(null=True)
     ap_unit = models.CharField(max_length=50, null=True, blank=True)
     suburb = models.CharField(max_length=50, null=True, blank=True)
-    city = models.CharField(max_length=50, null=True)
+    city = models.CharField(max_length=50)
     latitude = models.CharField(max_length=50, blank=True)
     longitude = models.CharField(max_length=50, blank=True)
-    pos_code = models.IntegerField(null=True)
+    pos_code = models.IntegerField()
 
     def __int__(self):
         """A string representation of the model."""
@@ -45,15 +45,15 @@ class Origin(models.Model):
 class Destination(models.Model):
 
     order = models.OneToOneField(Order, related_name='destinations', on_delete=models.CASCADE)
-    name = models.CharField(max_length=200, null=False)
-    street = models.CharField(max_length=100, null=True)
-    house_num = models.IntegerField(null=True)
+    name = models.CharField(max_length=200)
+    street = models.CharField(max_length=100)
+    house_num = models.IntegerField()
     ap_unit = models.CharField(max_length=50, null=True, blank=True)
     suburb = models.CharField(max_length=50, null=True, blank=True)
-    city = models.CharField(max_length=50, null=True)
+    city = models.CharField(max_length=50)
     latitude = models.CharField(max_length=50, blank=True)
     longitude = models.CharField(max_length=50, blank=True)
-    pos_code = models.IntegerField(null=True)
+    pos_code = models.IntegerField()
 
     def __int__(self):
         """A string representation of the model."""
@@ -71,7 +71,7 @@ class OrderPackage(models.Model):
 class OrderStatus(models.Model):
 
     order = models.ForeignKey(Order, related_name='ord_status', on_delete=models.CASCADE)
-    status = models.ForeignKey(Status, on_delete=models.CASCADE, default=2)
+    status = models.ForeignKey(Status, on_delete=models.CASCADE, default=1)
     provider = models.ForeignKey(Provider, to_field='prov_code', on_delete=models.CASCADE, default='PG')
     location = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
     description = models.CharField(max_length=150, null=True, blank=True)

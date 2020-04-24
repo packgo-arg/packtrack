@@ -28,13 +28,14 @@ if os.path.isfile(dotenv_file):
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'ql^c7h8$$$l_yv2=_=-(he09pnos#b%3uv#7s(++!_jz4qw(k+'
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+
+
+DEBUG = os.getenv("DEBUG")
 
 ALLOWED_HOSTS = ['127.0.0.1','.herokuapp.com','packgo.com.ar']
-
 
 # Application definition
 
@@ -81,7 +82,7 @@ CORS_ORIGIN_WHITELIST = (
 )
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=120),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 
     'AUTH_HEADER_TYPES': ('Bearer',),
@@ -182,6 +183,6 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 sys.path.append(os.path.join(PROJECT_ROOT, 'tasks/lib'))
-django_heroku.settings(locals())
+#django_heroku.settings(locals())
 #if not ENV:
     #del DATABASES['default']['OPTIONS']['sslmode']
