@@ -88,12 +88,12 @@ class  StatusDetail(APIView):
 
     def get(self, request, format_=None):
 
-        #try:
-        if Order.objects.get(pk=request.data['order']).client_id == request.data['client']:
-            order_status = OrderStatus.objects.filter(order_id=request.data['order']).last()
-            serializer = OrderStatusSerializer(order_status)
-            return Response(serializer.data)
-        else:
-            return Response({"Fail": "Client ID does not match with Order"}, status=status.HTTP_400_BAD_REQUEST)
-        #except:
-            #return Response({"Fail": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            if Order.objects.get(pk=request.data['order']).client_id == request.data['client']:
+                order_status = OrderStatus.objects.filter(order_id=request.data['order']).last()
+                serializer = OrderStatusSerializer(order_status)
+                return Response(serializer.data)
+            else:
+                return Response({"Fail": "Client ID does not match with Order"}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({"Fail": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
