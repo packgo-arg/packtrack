@@ -13,13 +13,15 @@ class Package(models.Model):
     def __str__(self):
         return self.pkg_name
 
+
 class Status(models.Model):
     status_name = models.CharField(max_length=100, unique=True)
-    status_desc = models.CharField(max_length=200, blank=True)
+    status_desc = models.CharField(max_length=200, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.status_name
+
 
 class State(models.Model):
     state_name = models.CharField(max_length=100, unique=True)
@@ -29,6 +31,7 @@ class State(models.Model):
 
     def __str__(self):
         return self.state_name
+
 
 class Provider(models.Model):
     # required fields
@@ -53,6 +56,7 @@ class Client(models.Model):
         """A string representation of the model."""
         return self.client_name
 
+
 class MyAccountManager(BaseUserManager):
 
     def create_user(self, email, username, password=None):
@@ -62,7 +66,7 @@ class MyAccountManager(BaseUserManager):
             raise ValueError('Users must have username')
 
         user = self.model(
-             email=self.normalize_email(email),
+            email=self.normalize_email(email),
             username=username,
         )
 
@@ -105,7 +109,7 @@ class Account(AbstractBaseUser):
         return self.email
 
     def has_perm(self, perm, obj=None):
-        return  self.is_admin
+        return self.is_admin
 
     def has_module_perms(self, app_label):
         return True

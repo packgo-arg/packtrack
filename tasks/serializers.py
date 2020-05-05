@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import *
-from utils.models import *
+from .models import Order, Origin, Destination, OrderStatus, OrderPackage
+from utils.models import Status, State, Client
+from .lib.pg_library import calc_time, normalizeWord
 
 
 class ReturnSerializer(serializers.ModelSerializer):
@@ -14,10 +15,12 @@ class ReturnSerializer(serializers.ModelSerializer):
             'duration'
         )
 
+
 class StatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Status
         fields = "__all__"
+
 
 class OrderStatusSerializer(serializers.ModelSerializer):
 
@@ -48,6 +51,7 @@ class OrderStatusSerializer(serializers.ModelSerializer):
         except Status.DoesNotExist:
             return print('ERROR LOCATION')
 
+
 class OriginSerializer(serializers.ModelSerializer):
     class Meta:
         model = Origin
@@ -62,6 +66,13 @@ class OriginSerializer(serializers.ModelSerializer):
             'longitude',
             'pos_code'
         )
+
+    def validate_city(self, value):
+        try:
+            State.objects.get(state_name__unaccent__iexact=normalizeWord(value))
+            return value
+        except:
+            raise serializers.ValidationError('City Not found')
 
 
 class DestinationSerializer(serializers.ModelSerializer):
@@ -78,6 +89,13 @@ class DestinationSerializer(serializers.ModelSerializer):
             'longitude',
             'pos_code'
         )
+
+    def validate_city(self, value):
+        try:
+            State.objects.get(state_name__unaccent__iexact=normalizeWord(value))
+            return value
+        except:
+            raise serializers.ValidationError('City Not found')
 
 
 class PackageSerializer(serializers.ModelSerializer):
@@ -113,22 +131,20 @@ class OrderSerializer(serializers.ModelSerializer):
             'packages'
         )
 
+    def to_internal_value(self, value):
+        client_inst = Client.objects.get(client_code=value['client'])
+        value['client'] = client_inst.id
+        value['origins'], value['destinations'], value['start_time'], value['end_time'], value['duration'] = calc_time(value['origins'], value['destinations'])
+        return super().to_internal_value(value)
+
     def create(self, validated_data):
         origin_data = validated_data.pop('origins')
         dest_data = validated_data.pop('destinations')
         pkg_data = validated_data.pop('packages')
         order = Order.objects.create(**validated_data)
-        origin = Origin.objects.create(order=order, **origin_data)
-        destination = Destination.objects.create(order=order, **dest_data)
+        Origin.objects.create(order=order, **origin_data)
+        Destination.objects.create(order=order, **dest_data)
+        OrderStatus.objects.create(order=order, location=State.objects.get(state_name__unaccent__iexact=normalizeWord(origin_data['city'])))
         for pkg in pkg_data:
             OrderPackage.objects.create(order=order, **pkg)
-
         return order
-
-    def get_object(self, instance, validated_data):
-        origin, _ = Origin.objects.get(id=instance.origin.id, defaults=validated_data.pop('origins'))
-        destination, _ = Destination.objects.get(id=instance.destination.id,
-                                                 defaults=validated_data.pop('destinations'))
-        new_order, _ = Order.objects.get(id=order.id, defaults=validated_data)
-
-        return new_order

@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
-from utils.models import *
+from utils.models import Package, Status, State, Client, Provider
+
 
 class Order(models.Model):
 
@@ -8,15 +9,13 @@ class Order(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     request_id = models.IntegerField(null=True)
-    client = models.ForeignKey(Client, to_field='client_code', on_delete=models.CASCADE, default='NA')
-
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
 
     # internal
     created_at = models.DateTimeField(auto_now_add=True)
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
 
-#    assignee = models.TextField(null=True)
     delay = models.IntegerField(null=True, blank=True)
     duration = models.CharField(max_length=8, null=True, blank=True)
     accidental_delivery_duration = models.IntegerField(null=True, blank=True)
@@ -24,6 +23,7 @@ class Order(models.Model):
     def __str__(self):
         """A string representation of the model."""
         return self.title
+
 
 class Origin(models.Model):
 
@@ -42,6 +42,7 @@ class Origin(models.Model):
         """A string representation of the model."""
         return self.id
 
+
 class Destination(models.Model):
 
     order = models.OneToOneField(Order, related_name='destinations', on_delete=models.CASCADE)
@@ -59,6 +60,7 @@ class Destination(models.Model):
         """A string representation of the model."""
         return self.id
 
+
 class OrderPackage(models.Model):
 
     order = models.ForeignKey(Order, related_name='packages', on_delete=models.CASCADE)
@@ -68,11 +70,12 @@ class OrderPackage(models.Model):
     def __int__(self):
         return self.id
 
+
 class OrderStatus(models.Model):
 
     order = models.ForeignKey(Order, related_name='ord_status', on_delete=models.CASCADE)
     status = models.ForeignKey(Status, on_delete=models.CASCADE, default=1)
-    provider = models.ForeignKey(Provider, to_field='prov_code', on_delete=models.CASCADE, default='PG')
+    provider = models.ForeignKey(Provider, on_delete=models.CASCADE, default=1)
     location = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
     description = models.CharField(max_length=150, null=True, blank=True)
     st_update = models.DateTimeField(auto_now_add=True)

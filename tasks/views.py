@@ -1,38 +1,37 @@
-from rest_framework import generics
+# from rest_framework import generics
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from django.http import Http404
+# from rest_framework.decorators import api_view, permission_classes
+# from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-
-from .models import *
+# from rest_framework.permissions import AllowAny
+from .models import Order, OrderStatus
+from utils.models import Client
 from .serializers import OrderSerializer, ReturnSerializer, OrderStatusSerializer
-from .lib.pg_library import *
-from datetime import datetime, timezone, timedelta
-from django.utils import timezone
-from django.contrib.auth.models import User
+# from .lib.pg_library import *
+# from django.contrib.auth.models import User
+
 
 class OrderList(APIView):
     """
-    List all tasks, or create a new task.
+    List all tasks, or create a new task
     """
-    def get (self, request, format=None):
+    def get(self, request, format=None):
         orders = Order.objects.all()
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        serializer = OrderSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.validated_data['origins'], serializer.validated_data['destinations'], st, et, dur = calc_time(serializer.validated_data['origins'], serializer.validated_data['destinations'])
-            serializer.save(start_time=st, end_time=et, duration=dur)
-            OrderStatus(order_id = Order.objects.get(pk=serializer.data['id']).pk).save()
-            retser = ReturnSerializer(Order.objects.get(pk=serializer.data['id']))
-            return Response(retser.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        ord_serializer = OrderSerializer(data=request.data)
+        if ord_serializer.is_valid():
+            ord_serializer.save()
+            # OrderStatus(order_id=Order.objects.get(pk=ord_serializer.data['id']).pk, ).save()
+            ret_serializer = ReturnSerializer(Order.objects.get(pk=ord_serializer.data['id']))
+            return Response(ret_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(ord_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class  OrderDetail(APIView):
+
+class OrderDetail(APIView):
     """
     Retrieve, update or delete an order.
     """
@@ -74,7 +73,8 @@ class  OrderDetail(APIView):
         except Order.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-class  StatusDetail(APIView):
+
+class StatusDetail(APIView):
     """
     Retrieve, update or delete an order.
     """
@@ -88,12 +88,12 @@ class  StatusDetail(APIView):
 
     def get(self, request, format_=None):
 
-        try:
-            if Order.objects.get(pk=request.data['order']).client_id == request.data['client']:
-                order_status = OrderStatus.objects.filter(order_id=request.data['order']).last()
-                serializer = OrderStatusSerializer(order_status)
-                return Response(serializer.data)
-            else:
-                return Response({"Fail": "Client ID does not match with Order"}, status=status.HTTP_400_BAD_REQUEST)
-        except:
-            return Response({"Fail": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+        # try:
+        if Order.objects.get(pk=request.data['order']).client_id == Client.objects.get(client_code=request.data['client']).id:
+            order_status = OrderStatus.objects.filter(order_id=request.data['order']).last()
+            serializer = OrderStatusSerializer(order_status)
+            return Response(serializer.data)
+        else:
+            return Response({"Fail": "Client ID does not match with Order"}, status=status.HTTP_400_BAD_REQUEST)
+        # except:
+        #    return Response({"Fail": "Order not found"}, status=status.HTTP_404_NOTFOUND)

@@ -10,7 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
-import os, sys
+import os
+import sys
 import django_heroku
 import dj_database_url
 import dotenv
@@ -18,11 +19,11 @@ from datetime import timedelta
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ENV=False
+ENV = False
 dotenv_file = os.path.join(BASE_DIR, ".env")
 if os.path.isfile(dotenv_file):
     dotenv.load_dotenv(dotenv_file)
-    ENV=True
+    ENV = True
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
@@ -35,7 +36,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = os.getenv("DEBUG")
 
-ALLOWED_HOSTS = ['127.0.0.1','.herokuapp.com','packgo.com.ar']
+ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'packgo.com.ar']
 
 # Application definition
 
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'rest_framework',
     'corsheaders',
     'core.apps.CoreConfig',
@@ -109,30 +111,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'api.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#    }
-#}
-
-#Changed DB to use POSTGRESQL. """ GENERATE NEW DB USER AND PASS FOR PROD USE """
-
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#        'NAME': 'packtrack',
-#        'USER': 'postgres',
-#        'PASSWORD': 'wa7daf4k',
-#        'HOST': '127.0.0.1',
-#        'PORT': '5432',
-#    }
-#}
-
-#ADDED DB LINK TO HEROKU POSTGRESQL
+# POSTGRESQL
 
 DATABASES = {}
 DATABASES['default'] = dj_database_url.config(conn_max_age=600)
@@ -169,7 +148,7 @@ USE_L10N = True
 
 USE_TZ = True
 
-#Sessions
+# Sessions
 
 SESSION_COOKIE_AGE = 300
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
@@ -183,6 +162,4 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 sys.path.append(os.path.join(PROJECT_ROOT, 'tasks/lib'))
-#django_heroku.settings(locals())
-#if not ENV:
-    #del DATABASES['default']['OPTIONS']['sslmode']
+django_heroku.settings(locals())
