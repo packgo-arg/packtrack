@@ -92,3 +92,5 @@ db.sqlite3
 Dockerfile
 docker-compose.yml
 db_pop.py
+*.xlsx
+*.csv
