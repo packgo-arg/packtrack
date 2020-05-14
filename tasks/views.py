@@ -24,8 +24,9 @@ class OrderList(APIView):
     def post(self, request, format=None):
         ord_serializer = OrderSerializer(data=request.data)
         if ord_serializer.is_valid():
+            if ord_serializer.validated_data['duration'] == '99':
+                return Response({'Fail': 'Address data not valid. Please resend Address/Coordinates'}, status=status.HTTP_400_BAD_REQUEST)
             ord_serializer.save()
-            # OrderStatus(order_id=Order.objects.get(pk=ord_serializer.data['id']).pk, ).save()
             ret_serializer = ReturnSerializer(Order.objects.get(pk=ord_serializer.data['id']))
             return Response(ret_serializer.data, status=status.HTTP_201_CREATED)
         return Response(ord_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -88,12 +89,12 @@ class StatusDetail(APIView):
 
     def get(self, request, format_=None):
 
-        # try:
-        if Order.objects.get(pk=request.data['order']).client_id == Client.objects.get(client_code=request.data['client']).id:
-            order_status = OrderStatus.objects.filter(order_id=request.data['order']).last()
-            serializer = OrderStatusSerializer(order_status)
-            return Response(serializer.data)
-        else:
-            return Response({"Fail": "Client ID does not match with Order"}, status=status.HTTP_400_BAD_REQUEST)
-        # except:
-        #    return Response({"Fail": "Order not found"}, status=status.HTTP_404_NOTFOUND)
+        try:
+            if Order.objects.get(pk=request.data['order']).client_id == Client.objects.get(client_code=request.data['client']).id:
+                order_status = OrderStatus.objects.filter(order_id=request.data['order']).last()
+                serializer = OrderStatusSerializer(order_status)
+                return Response(serializer.data)
+            else:
+                return Response({"Fail": "Client ID does not match with Order"}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({"Fail": "Order not found"}, status=status.HTTP_404_NOTFOUND)
