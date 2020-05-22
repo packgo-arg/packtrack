@@ -8,7 +8,6 @@ class Package(models.Model):
     pkg_name = models.CharField(max_length=100, unique=True)
     pkg_code = models.CharField(max_length=2, unique=True)
     pkg_description = models.CharField(max_length=100, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.pkg_name

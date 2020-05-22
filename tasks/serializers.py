@@ -62,6 +62,7 @@ class OriginSerializer(serializers.ModelSerializer):
             'ap_unit',
             'suburb',
             'city',
+            'country',
             'latitude',
             'longitude',
             'pos_code'
@@ -85,6 +86,7 @@ class DestinationSerializer(serializers.ModelSerializer):
             'ap_unit',
             'suburb',
             'city',
+            'country',
             'latitude',
             'longitude',
             'pos_code'
@@ -134,6 +136,8 @@ class OrderSerializer(serializers.ModelSerializer):
     def to_internal_value(self, value):
         client_inst = Client.objects.get(client_code=value['client'])
         value['client'] = client_inst.id
+        value['origins']['country'] = 'Argentina'
+        value['destinations']['country'] = 'Argentina'
         value['origins'], value['destinations'], value['start_time'], value['end_time'], value['duration'] = calc_time(value['origins'], value['destinations'])
         return super().to_internal_value(value)
 

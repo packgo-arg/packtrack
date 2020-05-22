@@ -18,5 +18,8 @@ pandas = "*"
 xlrd = "*"
 djangorestframework-simplejwt = "*"
 googlemaps = "*"
+openpyxl = "*"
+django-extras = "*"
+django-3-jet = "*"
 
 [dev-packages]

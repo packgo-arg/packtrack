@@ -61,7 +61,7 @@ def calcDeliveryTime(ori, dest):
     orAd = ','.join(str(value) for value in dict(zip(wk, [ori[k] for k in wk])).values() if value)
     desAd = ','.join(str(value) for value in dict(zip(wk, [dest[k] for k in wk])).values() if value)
 
-    directions_result = gmaps.directions(orAd, desAd, mode="driving", avoid="ferries", departure_time=dt.datetime.now(), traffic_model="pessimistic")
+    directions_result = gmaps.directions(orAd, desAd, mode="driving", avoid="ferries", departure_time=timezone.now(), traffic_model="pessimistic")
     distance = directions_result[0]['legs'][0]['distance']['value'] / 1000
 
     if distance < 51:
@@ -78,9 +78,6 @@ def calcDeliveryTime(ori, dest):
 
 def calc_time(ori, dest):
 
-    ori['country'] = 'Argentina'
-    dest['country'] = 'Argentina'
-
     timecut = timezone.now().replace(hour=18, minute=0, second=0, microsecond=0)
 
     if not ori['latitude'] or not ori['longitude']: ori = getCoord(ori)
@@ -96,7 +93,7 @@ def calc_time(ori, dest):
         st = timecut
         et = st + dt.timedelta(hours=r)
     else:
-        st = timecut + dt.timedelta(days=1)
+        st = timezone.now().replace(hour=11, minute=0, second=0, microsecond=0) + dt.timedelta(days=1)
         et = st + dt.timedelta(hours=r)
 
     return ori, dest, st, et, r
