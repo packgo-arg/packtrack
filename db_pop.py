@@ -1,9 +1,10 @@
 import pandas as pd
 import sqlalchemy
+import os
 
-DATABASE_URL='postgres://postgres:postgres@db:5432/packtrack?'
+#DATABASE_URL='postgres://postgres:postgres@db:5432/packtrack?'
 
-engine = sqlalchemy.create_engine(DATABASE_URL)
+engine = sqlalchemy.create_engine(os.getenv("DATABASE_URL"))
 con = engine.connect()
 
 tables = pd.ExcelFile('TABLAS.xlsx')

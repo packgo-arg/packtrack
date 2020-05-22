@@ -21,5 +21,6 @@ googlemaps = "*"
 openpyxl = "*"
 django-extras = "*"
 django-3-jet = "*"
+sqlalchemy = "*"
 
 [dev-packages]

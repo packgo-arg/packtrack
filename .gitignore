@@ -94,3 +94,4 @@ docker-compose.yml
 *.xlsx
 *.csv
 /api/static/*/
+!TABLAS.xlsx
