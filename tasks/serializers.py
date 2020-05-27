@@ -24,7 +24,6 @@ class StatusSerializer(serializers.ModelSerializer):
 
 class OrderStatusSerializer(serializers.ModelSerializer):
 
-    status = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
 
     class Meta:
@@ -36,13 +35,6 @@ class OrderStatusSerializer(serializers.ModelSerializer):
             'description',
             'st_update'
         )
-
-    def get_status(self, obj):
-        try:
-            status_inst = Status.objects.get(pk=obj.status_id)
-            return status_inst.status_name
-        except Status.DoesNotExist:
-            return print('ERROR STATUS')
 
     def get_location(self, obj):
         try:
