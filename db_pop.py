@@ -1,8 +1,12 @@
 import pandas as pd
 import sqlalchemy
 import os
+import dotenv
 
-#DATABASE_URL='postgres://postgres:postgres@db:5432/packtrack?'
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+dotenv_file = os.path.join(BASE_DIR, ".env")
+if os.path.isfile(dotenv_file):
+    dotenv.load_dotenv(dotenv_file)
 
 engine = sqlalchemy.create_engine(os.getenv("DATABASE_URL"))
 con = engine.connect()
@@ -15,4 +19,3 @@ for tab in tables.sheet_names:
 	print(df)
 	df.to_sql(tab, con=engine, index=False, if_exists='append')
 	engine.execute(f'SELECT * FROM {tab}').fetchall()
-
