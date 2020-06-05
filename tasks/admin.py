@@ -3,8 +3,12 @@ from django.http import HttpResponse
 from django.utils import timezone
 from .models import *
 from utils.models import *
+import re
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a053084... commit changes
 class OriginItemInline(admin.StackedInline):
     model = Origin
     extra = 1
@@ -60,7 +64,8 @@ class OrderAdmin(admin.ModelAdmin):
         import openpyxl, re
         from openpyxl.utils import get_column_letter
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = f"attachment; filename={timezone.now()}_export.xlsx"
+        filename = re.sub(' ','_','{}-export.xlsx'.format(timezone.localtime()))
+        response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "MyModel"
@@ -76,6 +81,10 @@ class OrderAdmin(admin.ModelAdmin):
             (u"Longitude", 20),
             (u"Description", 30),
             (u"Order ID", 5),
+            (u"Performer", 5),
+            (u"Price", 20),
+            (u"Client", 20),
+            (u"Req_id", 20),
         ]
 
         for col_num in range(len(columns)):
@@ -87,11 +96,12 @@ class OrderAdmin(admin.ModelAdmin):
 
         for obj in queryset:
             dest = Destination.objects.filter(order=obj.pk).values()[0]
-            wk = ('street', 'house_num', 'suburb', 'city', 'country', 'pos_code')
+            status = OrderStatus.objects.filter(order=obj.pk).last()
+            wk = ('street', 'house_num', 'suburb', 'city', 'province', 'country', 'pos_code')
             address = re.sub(',', '', ', '.join(str(value) for value in dict(zip(wk, [dest[k] for k in wk])).values() if value), 1)
             row_num += 1
             row = [
-                obj.title,
+                dest['name'],
                 obj.start_time,
                 obj.end_time,
                 address,
@@ -99,6 +109,10 @@ class OrderAdmin(admin.ModelAdmin):
                 dest['longitude'],
                 obj.description,
                 obj.pk,
+                status.provider.prov_name,
+                obj.ord_price,
+                obj.client.client_name,
+                obj.request_id,
             ]
             for col_num in range(len(row)):
                 c = ws.cell(row=row_num + 1, column=col_num + 1)

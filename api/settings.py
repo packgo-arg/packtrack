@@ -37,7 +37,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = os.getenv("DEBUG")
 
-ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'packgo.com.ar']
+ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'packgo.com.ar', '172.17.0.1']
 
 # Application definition
 
@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'tasks.apps.TasksConfig',
     'utils.apps.UtilsConfig',
-    'landing.apps.LandingConfig'
+    'landing.apps.LandingConfig',
 ]
 
 MIDDLEWARE = [
