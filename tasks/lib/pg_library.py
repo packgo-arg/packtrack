@@ -1,10 +1,10 @@
-import pandas as pd
 import datetime as dt
 import unicodedata
 import re
 import os
 from django.utils import timezone
 from googlemaps import Client as GoogleMaps
+import herepy
 
 
 def normalizeWord(word):
@@ -26,11 +26,24 @@ def validateAddress(address):
         return False
 
 
+def jsonForApi(local, city, apipoint):
+    dictio = {
+        apipoint: [
+            {
+                "nombre": local,
+                "provincia": city,
+            }
+        ]
+    }
+    return dictio
+
+
 def getCoord(location):
 
+    msj = ''
     gmaps = GoogleMaps(os.getenv("GOOGLE_KEY"))
 
-    wk = ('street', 'house_num', 'suburb', 'city', 'country', 'pos_code')
+    wk = ('street', 'house_num', 'suburb', 'city', 'province', 'country', 'pos_code')
     address = re.sub(',', '', ', '.join(value for value in dict(zip(wk, [location[k] for k in wk])).values() if value), 1)
     geocode_result = gmaps.geocode(address)
 
@@ -41,28 +54,30 @@ def getCoord(location):
                     data[category] = {}
                     data[category] = item['long_name']
     else:
-        print('COORDINATES NOT FOUND')
+        msj = 'Coordinates not found. Please check Address sent'
 
-    if data.get('country') == 'Argentina' and normalizeWord(data.get('locality')) == normalizeWord(location['city']):
+    if data.get('country') == location['country'] and normalizeWord(data.get('locality')) == normalizeWord(location['city']) and data.get('route'):
+        location['street'] = data.get('route')
+        location['city'] = data.get('locality')
+        location['province'] = data.get('administrative_area_level_1')
         location['latitude'] = data.get('geometry').get('location').get('lat')
         location['longitude'] = data.get('geometry').get('location').get('lng')
     else:
-        print('COORDINATES NOT VALIDATED')
-        print(data.get('locality'), '-', location['city'])
+        msj ='Address not Validated'
 
-    return location
+    print(msj)
+
+    return location, msj
 
 
 def calcDeliveryTime(ori, dest):
 
-    gmaps = GoogleMaps(os.getenv("GOOGLE_KEY"))
+    routingApi = herepy.RoutingApi(os.getenv("HERE_KEY"))
 
-    wk = ('latitude', 'longitude')
-    orAd = ','.join(str(value) for value in dict(zip(wk, [ori[k] for k in wk])).values() if value)
-    desAd = ','.join(str(value) for value in dict(zip(wk, [dest[k] for k in wk])).values() if value)
-
-    directions_result = gmaps.directions(orAd, desAd, mode="driving", avoid="ferries", departure_time=timezone.now(), traffic_model="pessimistic")
-    distance = directions_result[0]['legs'][0]['distance']['value'] / 1000
+    response = routingApi.truck_route([ori.get('latitude'), ori.get('longitude')],
+                                  [dest.get('latitude'), dest.get('longitude')],
+                                  [herepy.RouteMode.truck, herepy.RouteMode.fastest]).as_dict()
+    distance = response.get('response').get('route')[0].get('summary').get('distance') / 1000
 
     if distance < 51:
         deltime = 6
@@ -73,27 +88,28 @@ def calcDeliveryTime(ori, dest):
     else:
         deltime = 72
 
-    return ori, dest, deltime
+    return deltime, distance
 
 
-def calc_time(ori, dest):
+def calcPrice(km, disc, pack, info):
 
-    timecut = timezone.now().replace(hour=18, minute=0, second=0, microsecond=0)
-
-    if not ori['latitude'] or not ori['longitude']: ori = getCoord(ori)
-    if not dest['latitude'] or not dest['longitude']: dest = getCoord(dest)
-
-    try:
-        ori, dest, r = calcDeliveryTime(ori, dest)
-    except:
-        print('ERROR GMAPS')
-        r = 99
-
-    if timezone.now() <= timecut:
-        st = timecut
-        et = st + dt.timedelta(hours=r)
+    km = int(round(km))
+    r = [1, 2, 3, 3]
+    if km >= 100:
+        mult = int(km // 100 + 3)**info.pkg_coef
     else:
-        st = timezone.now().replace(hour=11, minute=0, second=0, microsecond=0) + dt.timedelta(days=1)
-        et = st + dt.timedelta(hours=r)
+        mult = int(r[km//25])**info.pkg_coef
 
-    return ori, dest, st, et, r
+    if 10 < pack.get('quantity') < 20:
+        disc += 0.1
+    elif 20 < pack.get('quantity') < 30:
+        disc += 0.2
+    elif 30 < pack.get('quantity') < 40:
+        disc += 0.3
+    elif 40 < pack.get('quantity'):
+        disc += 0.4
+
+    base = info.pkg_price - (info.pkg_price * disc)
+    total = (base * mult) * pack.get('quantity')
+
+    return total

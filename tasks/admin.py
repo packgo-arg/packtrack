@@ -5,12 +5,12 @@ from .models import *
 from utils.models import *
 
 
-class OriginItemInline(admin.TabularInline):
+class OriginItemInline(admin.StackedInline):
     model = Origin
     extra = 1
 
 
-class DestinationItemInline(admin.TabularInline):
+class DestinationItemInline(admin.StackedInline):
     model = Destination
     extra = 1
 
@@ -33,13 +33,13 @@ class OrderAdmin(admin.ModelAdmin):
 
     model = Order
     fieldsets = (('TITULO', {
-                    'fields': ('id', 'title', 'description')
+                    'fields': ('id', 'title', 'description', 'ord_price')
                     }),
                  ('CLIENTE', {
                      'fields': (('client', 'request_id'),)
                  }),
                  ('TIEMPO', {
-                     'fields': ('created_at', ('start_time', 'end_time'), 'duration')
+                     'fields': ('created_at', 'start_time', 'end_time', 'duration')
                  }),
                  )
     readonly_fields = ['id', 'created_at', 'client', 'request_id']

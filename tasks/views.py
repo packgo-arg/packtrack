@@ -4,7 +4,7 @@ from rest_framework import status
 # from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
-# from rest_framework.permissions import AllowAny
+# from ŕest_framework.permissions import AllowAny
 from .models import Order, OrderStatus
 from utils.models import Client
 from .serializers import OrderSerializer, ReturnSerializer, OrderStatusSerializer
@@ -29,6 +29,7 @@ class OrderList(APIView):
             ord_serializer.save()
             ret_serializer = ReturnSerializer(Order.objects.get(pk=ord_serializer.data['id']))
             return Response(ret_serializer.data, status=status.HTTP_201_CREATED)
+        print(ord_serializer.errors)
         return Response(ord_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

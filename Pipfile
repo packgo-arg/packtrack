@@ -22,5 +22,6 @@ openpyxl = "*"
 django-extras = "*"
 django-3-jet = "*"
 sqlalchemy = "*"
+herepy = "*"
 
 [dev-packages]

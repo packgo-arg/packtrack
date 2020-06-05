@@ -1,4 +1,7 @@
 from django.contrib import admin
+from tasks.lib.pg_library import jsonForApi
+import requests
+import os
 from .models import *
 
 class ClientAdmin(admin.ModelAdmin):
@@ -24,7 +27,8 @@ class StatusAdmin(admin.ModelAdmin):
 class StateAdmin(admin.ModelAdmin):
 
     readonly_fields = ['id', 'created_at']
-    list_display = ['state_name', 'latitude', 'longitude', 'created_at']
+    list_display = ['city', 'province', 'latitude', 'longitude', 'created_at']
+
 
 admin.site.register(Client, ClientAdmin)
 admin.site.register(Provider, ProvAdmin)

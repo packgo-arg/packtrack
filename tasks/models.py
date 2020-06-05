@@ -17,8 +17,9 @@ class Order(models.Model):
     end_time = models.DateTimeField(null=True)
 
     delay = models.IntegerField(null=True, blank=True)
-    duration = models.CharField(max_length=8, null=True, blank=True)
-    accidental_delivery_duration = models.IntegerField(null=True, blank=True)
+    duration = models.PositiveIntegerField(null=True, blank=True)
+    accidental_delivery_duration = models.PositiveIntegerField(null=True, blank=True)
+    ord_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
 
     def __str__(self):
         """A string representation of the model."""
@@ -33,7 +34,8 @@ class Origin(models.Model):
     house_num = models.IntegerField(null=True)
     ap_unit = models.CharField(max_length=50, null=True, blank=True)
     suburb = models.CharField(max_length=50, null=True, blank=True)
-    city = models.CharField(max_length=50)
+    city = models.CharField(max_length=50, null=True)
+    province = models.CharField(max_length=50, null=True)
     country = models.CharField(max_length=50, blank=True)
     latitude = models.CharField(max_length=50, blank=True)
     longitude = models.CharField(max_length=50, blank=True)
@@ -52,7 +54,8 @@ class Destination(models.Model):
     house_num = models.IntegerField()
     ap_unit = models.CharField(max_length=50, null=True, blank=True)
     suburb = models.CharField(max_length=50, null=True, blank=True)
-    city = models.CharField(max_length=50)
+    city = models.CharField(max_length=50, null=True)
+    province = models.CharField(max_length=50, null=True)
     country = models.CharField(max_length=50, blank=True)
     latitude = models.CharField(max_length=50, blank=True)
     longitude = models.CharField(max_length=50, blank=True)
@@ -68,6 +71,7 @@ class OrderPackage(models.Model):
     order = models.ForeignKey(Order, related_name='packages', on_delete=models.CASCADE)
     pak_type = models.ForeignKey(Package, on_delete=models.CASCADE, null=True)
     quantity = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(99)])
+    ord_pak_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
 
     def __int__(self):
         return self.id

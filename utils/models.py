@@ -1,13 +1,18 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
-
+from django.core.validators import MaxValueValidator, MinValueValidator
+from tasks.lib.pg_library import jsonForApi
+import requests
+import os
 
 # Create your models here.
 
 class Package(models.Model):
-    pkg_name = models.CharField(max_length=100, unique=True)
+    pkg_name = models.CharField(max_length=20, unique=True)
     pkg_code = models.CharField(max_length=2, unique=True)
     pkg_description = models.CharField(max_length=100, null=True, blank=True)
+    pkg_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    pkg_coef = models.FloatField(default=0, validators=[MinValueValidator(0)])
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -15,7 +20,7 @@ class Package(models.Model):
 
 
 class Status(models.Model):
-    status_name = models.CharField(max_length=100, unique=True)
+    status_name = models.CharField(max_length=50, unique=True)
     status_desc = models.CharField(max_length=200, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -24,18 +29,32 @@ class Status(models.Model):
 
 
 class State(models.Model):
-    state_name = models.CharField(max_length=100, unique=True)
-    latitude = models.CharField(max_length=15, null=True, blank=True)
-    longitude = models.CharField(max_length=15, null=True, blank=True)
+    city = models.CharField(max_length=50, unique=True, null=True)
+    province = models.CharField(max_length=50, null=True)
+    country = models.CharField(max_length=50, null=True)
+    latitude = models.CharField(max_length=30, null=True, blank=True)
+    longitude = models.CharField(max_length=30, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.state_name
+        return self.city
+
+    def save(self, *args, **kwargs):
+
+        req = requests.post(f'{os.getenv("API_BASE_URL")}localidades-censales', json=jsonForApi(self.city, self.province, 'localidades_censales')).json().get('resultados', None)[0].get('localidades_censales', None)[0]
+
+        self.city = req.get('nombre')
+        self.province = req.get('provincia').get('nombre')
+        self.country = 'Argentina'
+        self.latitude = req.get('centroide').get('lat')
+        self.longitude = req.get('centroide').get('lon')
+
+        super(State, self).save(*args, **kwargs)
 
 
 class Provider(models.Model):
     # required fields
-    prov_name = models.CharField(max_length=200, unique=True)
+    prov_name = models.CharField(max_length=20, unique=True)
     prov_code = models.CharField(max_length=2, unique=True)
     state_code = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -47,9 +66,11 @@ class Provider(models.Model):
 
 class Client(models.Model):
     # required fields
-    client_name = models.CharField(max_length=100, unique=True)
+    client_name = models.CharField(max_length=20, unique=True)
     client_code = models.CharField(max_length=2, unique=True)
     state_code = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
+    price_disc = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(1)])
+    cust_rule = models.CharField(max_length=20, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
