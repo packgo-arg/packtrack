@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.core.validators import MaxValueValidator, MinValueValidator
-from tasks.lib.pg_library import jsonForApi
+from tasks.lib.pg_library import getCoord
 import requests
 import os
 
@@ -41,7 +41,7 @@ class State(models.Model):
 
     def save(self, *args, **kwargs):
 
-        req = requests.post(f'{os.getenv("API_BASE_URL")}localidades-censales', json=jsonForApi(self.city, self.province, 'localidades_censales')).json().get('resultados', None)[0].get('localidades_censales', None)[0]
+        req = getCoord(self.city, self.province)
 
         self.city = req.get('nombre')
         self.province = req.get('provincia').get('nombre')
@@ -62,6 +62,22 @@ class Provider(models.Model):
     def __str__(self):
         """A string representation of the model."""
         return self.prov_name
+
+class Driver(models.Model):
+
+    driv_name = models.CharField(max_length=20, unique=True)
+    vehicle_type = models.CharField(max_length=20)
+    vehicle_brand = models.CharField(max_length=30, null=True, blank=True)
+    vehicle_model = models.CharField(max_length=30, null=True, blank=True)
+    vehicle_year = models.PositiveIntegerField(default=0, validators=[MaxValueValidator(2999)])
+    vehicle_plate = models.CharField(max_length=20, unique=True)
+    vehicle_capacity = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(200)])
+    prov_code = models.ForeignKey(Provider, on_delete=models.CASCADE, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        """A string representation of the model."""
+        return self.driv_name
 
 
 class Client(models.Model):

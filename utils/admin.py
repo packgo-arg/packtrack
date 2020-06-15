@@ -4,6 +4,14 @@ import requests
 import os
 from .models import *
 
+class DriverInline(admin.TabularInline):
+    model = Driver
+    readonly_fields = ['id', 'created_at']
+    extra = 1
+
+    def get_status(self, obj):
+        return obj.get_driver_display()
+
 class ClientAdmin(admin.ModelAdmin):
 
     readonly_fields = ['id', 'created_at']
@@ -13,6 +21,8 @@ class ProvAdmin(admin.ModelAdmin):
 
     readonly_fields = ['id', 'created_at']
     list_display = ['prov_name','id', 'created_at']
+
+    inlines = (DriverInline,)
 
 class PkgAdmin(admin.ModelAdmin):
 

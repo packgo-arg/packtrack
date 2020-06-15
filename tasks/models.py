@@ -1,14 +1,14 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
-from utils.models import Package, Status, State, Client, Provider
+from utils.models import Package, Status, State, Client, Provider, Driver
 
 
 class Order(models.Model):
 
     # required fields
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=50)
     description = models.TextField(blank=True)
-    request_id = models.IntegerField(null=True)
+    request_id = models.CharField(max_length=50, null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
 
     # internal
@@ -29,9 +29,9 @@ class Order(models.Model):
 class Origin(models.Model):
 
     order = models.OneToOneField(Order, related_name='origins', on_delete=models.CASCADE)
-    name = models.CharField(max_length=200)
-    street = models.CharField(max_length=100)
-    house_num = models.IntegerField(null=True)
+    name = models.CharField(max_length=50)
+    street = models.CharField(max_length=50, null=True, blank=True)
+    house_num = models.IntegerField(null=True, blank=True)
     ap_unit = models.CharField(max_length=50, null=True, blank=True)
     suburb = models.CharField(max_length=50, null=True, blank=True)
     city = models.CharField(max_length=50, null=True)
@@ -39,7 +39,7 @@ class Origin(models.Model):
     country = models.CharField(max_length=50, blank=True)
     latitude = models.CharField(max_length=50, blank=True)
     longitude = models.CharField(max_length=50, blank=True)
-    pos_code = models.IntegerField()
+    pos_code = models.IntegerField(null=True, blank=True)
 
     def __int__(self):
         """A string representation of the model."""
@@ -49,9 +49,9 @@ class Origin(models.Model):
 class Destination(models.Model):
 
     order = models.OneToOneField(Order, related_name='destinations', on_delete=models.CASCADE)
-    name = models.CharField(max_length=200)
-    street = models.CharField(max_length=100)
-    house_num = models.IntegerField()
+    name = models.CharField(max_length=50)
+    street = models.CharField(max_length=50, null=True, blank=True)
+    house_num = models.IntegerField(null=True, blank=True)
     ap_unit = models.CharField(max_length=50, null=True, blank=True)
     suburb = models.CharField(max_length=50, null=True, blank=True)
     city = models.CharField(max_length=50, null=True)
@@ -59,7 +59,7 @@ class Destination(models.Model):
     country = models.CharField(max_length=50, blank=True)
     latitude = models.CharField(max_length=50, blank=True)
     longitude = models.CharField(max_length=50, blank=True)
-    pos_code = models.IntegerField()
+    pos_code = models.IntegerField(null=True, blank=True)
 
     def __int__(self):
         """A string representation of the model."""
@@ -82,6 +82,7 @@ class OrderStatus(models.Model):
     order = models.ForeignKey(Order, related_name='ord_status', on_delete=models.CASCADE)
     status = models.ForeignKey(Status, on_delete=models.CASCADE, default=1)
     provider = models.ForeignKey(Provider, on_delete=models.CASCADE, default=1)
+    driver = models.ForeignKey(Driver, on_delete=models.CASCADE, null=True)
     location = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
     description = models.CharField(max_length=150, null=True, blank=True)
     st_update = models.DateTimeField(auto_now_add=True)
