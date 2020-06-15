@@ -37,12 +37,11 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = os.getenv("DEBUG")
 
-ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'packgo.com.ar']
+ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'packgo.com.ar', '172.17.0.1']
 
 # Application definition
 
 INSTALLED_APPS = [
-    #'jet.dashboard',
     'jet',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -56,7 +55,7 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'tasks.apps.TasksConfig',
     'utils.apps.UtilsConfig',
-    'landing.apps.LandingConfig'
+    'landing.apps.LandingConfig',
 ]
 
 MIDDLEWARE = [
@@ -166,7 +165,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 sys.path.append(os.path.join(PROJECT_ROOT, 'tasks/lib'))
 
-JET_DEFAULT_THEME = 'light-blue'
+JET_DEFAULT_THEME = 'default'
 JET_SIDE_MENU_COMPACT = True
 
 if not ENV:

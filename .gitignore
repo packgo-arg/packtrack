@@ -95,3 +95,5 @@ docker-compose.yml
 *.csv
 /api/static/*/
 !TABLAS.xlsx
+order.json
+*.geojson
