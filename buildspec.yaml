@@ -1,0 +1,19 @@
+version: 0.1
+
+phases:
+  install:
+    commands:
+      - apt-get update -y
+      - apt-get install -y maven curl wget python-psycopg2
+  pre_build:
+    commands:
+      - pip install --upgrade pip
+      - pip install pipenv
+      - set -ex && pipenv install --system --deploy
+  build:
+    commands:
+      - python manage.py runserver & echo $! > pidfile
+      - sleep 30
+  post_build:
+    commands:
+      - echo Build completed on `date`

@@ -3,12 +3,8 @@ from django.http import HttpResponse
 from django.utils import timezone
 from .models import *
 from utils.models import *
-import re
 
-<<<<<<< HEAD
 
-=======
->>>>>>> a053084... commit changes
 class OriginItemInline(admin.StackedInline):
     model = Origin
     extra = 1
@@ -54,17 +50,18 @@ class OrderAdmin(admin.ModelAdmin):
     # if you want django admin to show the search bar, just add this line
     # search_fields = ('client','created_at')
     filter_horizontal = ()
-    list_filter = ('client','created_at')
+    list_filter = ('client', 'created_at')
 
     # inlines
     inlines = (OriginItemInline, DestinationItemInline, PackageItemInline, OrderStatusInline,)
 
     def export_xlsx(modeladmin, request, queryset):
 
-        import openpyxl, re
+        import openpyxl
+        import re
         from openpyxl.utils import get_column_letter
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        filename = re.sub(' ','_','{}-export.xlsx'.format(timezone.localtime()))
+        filename = re.sub(' ', '_', '{}-export.xlsx'.format(timezone.localtime()))
         response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -92,7 +89,7 @@ class OrderAdmin(admin.ModelAdmin):
             c.value = columns[col_num][0]
             # c.style.font.bold = True
             # set column width
-            ws.column_dimensions[get_column_letter(col_num+1)].width = columns[col_num][1]
+            ws.column_dimensions[get_column_letter(col_num + 1)].width = columns[col_num][1]
 
         for obj in queryset:
             dest = Destination.objects.filter(order=obj.pk).values()[0]
@@ -124,6 +121,7 @@ class OrderAdmin(admin.ModelAdmin):
         return response
 
     actions = [export_xlsx]
+
 
 admin.site.register(Order, OrderAdmin)
 
