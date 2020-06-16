@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.core.validators import MaxValueValidator, MinValueValidator
-from tasks.lib.pg_library import getCoord
+from tasks.lib.pg_library import getLocal
 import requests
 import os
 
@@ -41,7 +41,7 @@ class State(models.Model):
 
     def save(self, *args, **kwargs):
 
-        req = getCoord(self.city, self.province)
+        req = getLocal('localidades_censales', [dict(nombre=self.city, provincia=self.province)])
 
         self.city = req.get('nombre')
         self.province = req.get('provincia').get('nombre')
