@@ -88,3 +88,12 @@ local_settings.py
 
 .env
 db.sqlite3
+*.ipynb
+Dockerfile
+docker-compose.yml
+*.xlsx
+*.csv
+/api/static/*/
+!TABLAS.xlsx
+order.json
+*.geojson

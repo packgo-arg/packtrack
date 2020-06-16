@@ -14,12 +14,24 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from landing import views
 from django.urls import path, include
-from rest_framework_jwt.views import obtain_jwt_token
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 urlpatterns = [
+    # Admin site
+    path('jet/', include('jet.urls', 'jet')),  # Django JET URLS
+    #path('jet/dashboard/', include('jet.dashboard.urls', 'jet-dashboard')),  # Django JET dashboard URLS
     path('admin/', admin.site.urls),
-    path('token-auth/', obtain_jwt_token),
+    # Token handlers
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # API urls
     path('core/', include('core.urls')),
-    path('api/', include('tasks.urls'))
+    path('api/tasks/', include('tasks.urls')),
+    #landing
+    path('', views.index)
 ]
