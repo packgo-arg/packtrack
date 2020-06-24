@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.core.validators import MaxValueValidator, MinValueValidator
-from tasks.lib.pg_library import getLocal
+from tasks.services import LocationService
 
 
 # Create your models here.
@@ -40,7 +40,7 @@ class State(models.Model):
 
     def save(self, *args, **kwargs):
 
-        req = getLocal('localidades_censales', [dict(nombre=self.city, provincia=self.province)])
+        req = LocationService.getLocal('localidades_censales', [dict(nombre=self.city, provincia=self.province)])
 
         self.city = req.get('nombre')
         self.province = req.get('provincia').get('nombre')
@@ -61,6 +61,7 @@ class Provider(models.Model):
     def __str__(self):
         """A string representation of the model."""
         return self.prov_name
+
 
 class Driver(models.Model):
 
