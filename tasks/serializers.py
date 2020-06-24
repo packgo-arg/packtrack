@@ -2,10 +2,9 @@ from rest_framework import serializers
 from django.utils import timezone
 from .models import Order, Origin, Destination, OrderStatus, OrderPackage
 from utils.models import Status, State, Client, Package
-from .lib.pg_library import calcDeliveryTime, normalizeWord, getCoord, getLocal, calcPrice, popOrigin
-import os
 import datetime as dt
 import time
+from .services import DataService, ValidateService, LocationService, CalcService
 
 
 class ReturnSerializer(serializers.ModelSerializer):
@@ -18,7 +17,6 @@ class ReturnSerializer(serializers.ModelSerializer):
             'end_time',
             'duration'
         )
-
 
 
 class OrderStatusSerializer(serializers.ModelSerializer):
@@ -65,17 +63,18 @@ class OriginSerializer(serializers.ModelSerializer):
         start_time = time.time()
 
         try:
-            req = getLocal('localidades_censales', [dict(nombre=value['city'], provincia=value['province'])])
+            req = LocationService.getLocal('localidades_censales', [dict(nombre=value['city'], provincia=value['province'])])
             value['city'] = req.get('nombre', None)
             value['province'] = req.get('provincia', None).get('nombre', None)
-            if 'suburb' in value.keys() and 'barrio' not in normalizeWord(value['suburb']):
+            if 'suburb' in value.keys() and 'barrio' not in ValidateService.normalizeWord(value['suburb']):
                 value['suburb'] = 'Barrio ' + value['suburb']
         except IndexError:
             raise serializers.ValidationError('Could not validate Locality')
 
-        if not 'latitude' in value.keys() or not 'longitude' in value.keys() or not value['latitude'] or not value['longitude']:
-            value, msj = getCoord(value)
-            if msj: raise serializers.ValidationError(msj)
+        if 'latitude' not in value.keys() or 'longitude' not in value.keys() or not value['latitude'] or not value['longitude']:
+            orAdd = ValidateService.listToAddr(value)
+            orData = LocationService.getCoord(orAdd)
+            value = DataService.popData(orData, value)
         print('--- Tiempo de ejecucion Origin_to_internal: {} segundos ---'.format((time.time() - start_time)))
         return super().to_internal_value(value)
 
@@ -83,7 +82,7 @@ class OriginSerializer(serializers.ModelSerializer):
         start_time = time.time()
         print('--- INICIO ORDER_VALIDATE_CITY ---')
         try:
-            State.objects.get(city__unaccent__iexact=normalizeWord(value))
+            State.objects.get(city__unaccent__iexact=ValidateService.normalizeWord(value))
             print('--- Tiempo de ejecucion Origin_validate_city: {} segundos ---'.format((time.time() - start_time)))
             return value
         except:
@@ -112,17 +111,18 @@ class DestinationSerializer(serializers.ModelSerializer):
         start_time = time.time()
         print('--- INICIO DEST_TO_INTERNAL ---')
         try:
-            req = getLocal('localidades_censales', [dict(nombre=value['city'], provincia=value['province'])])
+            req = LocationService.getLocal('localidades_censales', [dict(nombre=value['city'], provincia=value['province'])])
             value['city'] = req.get('nombre', None)
             value['province'] = req.get('provincia', None).get('nombre', None)
-            if 'suburb' in value.keys() and 'barrio' not in normalizeWord(value['suburb']):
+            if 'suburb' in value.keys() and 'barrio' not in ValidateService.normalizeWord(value['suburb']):
                 value['suburb'] = 'Barrio ' + value['suburb']
         except IndexError:
             raise serializers.ValidationError('Could not validate locality')
 
-        if not 'latitude' in value.keys() or not 'longitude' in value.keys() or not value['latitude'] or not value['longitude']:
-            value, msj = getCoord(value)
-            if msj: raise serializers.ValidationError(msj)
+        if 'latitude' not in value.keys() or 'longitude' not in value.keys() or not value['latitude'] or not value['longitude']:
+            destAdd = ValidateService.listToAddr(value)
+            destData = LocationService.getCoord(destAdd)
+            value = DataService.popData(destData, value)
         print('--- Tiempo de ejecucion Dest_to_internal: {} segundos ---'.format((time.time() - start_time)))
         return super().to_internal_value(value)
 
@@ -130,7 +130,7 @@ class DestinationSerializer(serializers.ModelSerializer):
         start_time = time.time()
         print('--- INICIO DEST_VALIDATE_CITY ---')
         try:
-            State.objects.get(city__unaccent__iexact=normalizeWord(value))
+            State.objects.get(city__unaccent__iexact=ValidateService.normalizeWord(value))
             print('--- Tiempo de ejecucion Dest_validate_city: {} segundos ---'.format((time.time() - start_time)))
             return value
         except:
@@ -161,6 +161,87 @@ class OrderPriceSerializer(serializers.ModelSerializer):
             'ord_price',
             'packages'
         )
+
+
+class PriceCalcSerializer(serializers.ModelSerializer):
+
+    packages = PackageSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = (
+            'origin_city',
+            'origin_province',
+            'dest_city',
+            'dest_province',
+            'packages',
+            'ord_price'
+        )
+
+    def to_internal_value(self, value):
+        start_time = time.time()
+        print('--- INICIO PRICE_CALC_TO_INT ---')
+        try:
+            ori = LocationService.getLocal('localidades_censales', [dict(nombre=value['origin_city'], provincia=value['province'])])
+            value['origin_city'] = ori.get('nombre', None)
+            value['origin_province'] = ori.get('provincia', None).get('nombre', None)
+        except IndexError:
+            raise serializers.ValidationError('Could not validate Origin locality')
+        try:
+            dest = LocationService.getLocal('localidades_censales', [dict(nombre=value['dest_city'], provincia=value['province'])])
+            value['dest_city'] = dest.get('nombre', None)
+            value['dest_province'] = dest.get('provincia', None).get('nombre', None)
+        except IndexError:
+            raise serializers.ValidationError('Could not validate Destnation locality')
+
+        orCoord, destCoord = {}, {}
+        orAdd = ValidateService.listToAddr(dict(city=value['origin_city'], province=value['origin_province']))
+        orData = LocationService.getCoord(orAdd)
+        orCoord['lat'] = orData.get('location', None).get('lat', None)
+        orCoord['lng'] = orData.get('location', None).get('lng', None)
+        destAdd = ValidateService.listToAddr(dict(city=value['dest_city'], province=value['dest_province']))
+        destData = LocationService.getCoord(destAdd)
+        destCoord['lat'] = destData.get('location', None).get('lat', None)
+        destCoord['lng'] = destData.get('location', None).get('lng', None)
+
+        try:
+            duration, distance = LocationService.getDeliveryTime(dict(latitude=orCoord['lat'], longitude=orCoord['lng']), dict(latitude=destCoord['lat'], longitude=orCoord['lng']))
+        except:
+            raise serializers.ValidationError('Could not parse coordinates')
+
+        value['ord_price'] = 0
+        disc = Client.objects.get(client_name=value['client']).price_disc
+        for pack in value['packages']:
+            pk_info = Package.objects.get(pkg_name=pack['pak_type'])
+            pack['ord_pak_price'] = CalcService.calcPrice(distance, disc, pack, pk_info)
+            value['ord_price'] += pack['ord_pak_price']
+        print('--- Tiempo de ejecucion Order_validate: {} segundos ---'.format((time.time() - start_time)))
+        return value
+
+        print('--- Tiempo de ejecucion priceCalc: {} segundos ---'.format((time.time() - start_time)))
+        return super().to_internal_value(value)
+
+    def validate_origin_city(self, value):
+        start_time = time.time()
+        print('--- INICIO VALIDATE_CALC_ORIGIN_CITY ---')
+        try:
+            State.objects.get(city__unaccent__iexact=ValidateService.normalizeWord(value))
+            print('--- Tiempo de ejecucion Calc_Origin_City_Validation: {} segundos ---'.format((time.time() - start_time)))
+            return value
+        except:
+            print('--- Tiempo de ejecucion Calc_Origin_City_Validation (fail): {} segundos ---'.format((time.time() - start_time)))
+            raise serializers.ValidationError('Destination address: Pack GO does not provide services in that location')
+
+    def validate_dest_city(self, value):
+        start_time = time.time()
+        print('--- INICIO VALIDATE_CALC_DEST_CITY ---')
+        try:
+            State.objects.get(city__unaccent__iexact=ValidateService.normalizeWord(value))
+            print('--- Tiempo de ejecucion Calc_Dest_City_Validation: {} segundos ---'.format((time.time() - start_time)))
+            return value
+        except:
+            print('--- Tiempo de ejecucion Calc_Dest_City_Validation (fail): {} segundos ---'.format((time.time() - start_time)))
+            raise serializers.ValidationError('Destination address: Pack GO does not provide services in that location')
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -196,8 +277,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
         value['client'] = client_inst.id
 
-        if not 'origins' in value.keys():
-            value['origins'] = dict(popOrigin())
+        if 'origins' not in value.keys():
+            value['origins'] = dict(DataService.getOrigin())
         print('--- Tiempo de ejecucion Order_to_internal: {} segundos ---'.format((time.time() - start_time)))
         return super().to_internal_value(value)
 
@@ -205,7 +286,7 @@ class OrderSerializer(serializers.ModelSerializer):
         start_time = time.time()
         print('--- INICIO ORDER_VALIDATE ---')
         try:
-            value['duration'], distance = calcDeliveryTime(value['origins'], value['destinations'])
+            value['duration'], distance = LocationService.getDeliveryTime(value['origins'], value['destinations'])
         except:
             value['duration'] = 99
             raise serializers.ValidationError('Could not parse coordinates')
@@ -220,7 +301,7 @@ class OrderSerializer(serializers.ModelSerializer):
         disc = Client.objects.get(client_name=value['client']).price_disc
         for pack in value['packages']:
             pk_info = Package.objects.get(pkg_name=pack['pak_type'])
-            pack['ord_pak_price'] = calcPrice(distance, disc, pack, pk_info)
+            pack['ord_pak_price'] = CalcService.calcPrice(distance, disc, pack, pk_info)
             value['ord_price'] += pack['ord_pak_price']
         print('--- Tiempo de ejecucion Order_validate: {} segundos ---'.format((time.time() - start_time)))
         return value
@@ -232,7 +313,7 @@ class OrderSerializer(serializers.ModelSerializer):
         order = Order.objects.create(**validated_data)
         Origin.objects.create(order=order, **origin_data)
         Destination.objects.create(order=order, **dest_data)
-        OrderStatus.objects.create(order=order, location=State.objects.get(city__unaccent__iexact=normalizeWord(origin_data['city'])))
+        OrderStatus.objects.create(order=order, location=State.objects.get(city__unaccent__iexact=ValidateService.normalizeWord(origin_data['city'])))
         for pkg in pkg_data:
             OrderPackage.objects.create(order=order, **pkg)
         return order

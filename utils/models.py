@@ -2,8 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.core.validators import MaxValueValidator, MinValueValidator
 from tasks.lib.pg_library import getLocal
-import requests
-import os
+
 
 # Create your models here.
 
