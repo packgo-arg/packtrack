@@ -7,4 +7,5 @@ urlpatterns = [
     path('<int:pk>/', views.OrderDetail.as_view()),
     path('status/', views.StatusDetail.as_view()),
     path('order_price/', views.PriceDetail.as_view()),
+    path('calc_price/', views.PriceCalculator.as_view()),
 ]

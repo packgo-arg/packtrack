@@ -5,6 +5,7 @@ from utils.models import Status, State, Client, Package
 import datetime as dt
 import time
 from .services import DataService, ValidateService, LocationService, CalcService
+from rest_framework.response import Response
 
 
 class ReturnSerializer(serializers.ModelSerializer):
@@ -163,32 +164,38 @@ class OrderPriceSerializer(serializers.ModelSerializer):
         )
 
 
-class PriceCalcSerializer(serializers.ModelSerializer):
+class PriceCalcSerializer(serializers.Serializer):
 
+    origin_city = serializers.CharField(max_length=50)
+    origin_province = serializers.CharField(max_length=50)
+    dest_city = serializers.CharField(max_length=50)
+    dest_province = serializers.CharField(max_length=50)
+    ord_price = serializers.FloatField(default=0)
     packages = PackageSerializer(many=True)
 
-    class Meta:
-        model = Order
-        fields = (
-            'origin_city',
-            'origin_province',
-            'dest_city',
-            'dest_province',
-            'packages',
-            'ord_price'
-        )
+#    class Meta:
+#        model = Order
+#        fields = (
+#            'origin_city',
+#            'origin_province',
+#            'dest_city',
+#            'dest_province',
+#            'ord_price',
+#            'packages'
+#        )
 
     def to_internal_value(self, value):
         start_time = time.time()
         print('--- INICIO PRICE_CALC_TO_INT ---')
+
         try:
-            ori = LocationService.getLocal('localidades_censales', [dict(nombre=value['origin_city'], provincia=value['province'])])
+            ori = LocationService.getLocal('localidades_censales', [dict(nombre=value['origin_city'], provincia=value['origin_province'])])
             value['origin_city'] = ori.get('nombre', None)
             value['origin_province'] = ori.get('provincia', None).get('nombre', None)
         except IndexError:
             raise serializers.ValidationError('Could not validate Origin locality')
         try:
-            dest = LocationService.getLocal('localidades_censales', [dict(nombre=value['dest_city'], provincia=value['province'])])
+            dest = LocationService.getLocal('localidades_censales', [dict(nombre=value['dest_city'], provincia=value['dest_province'])])
             value['dest_city'] = dest.get('nombre', None)
             value['dest_province'] = dest.get('provincia', None).get('nombre', None)
         except IndexError:
@@ -210,15 +217,16 @@ class PriceCalcSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Could not parse coordinates')
 
         value['ord_price'] = 0
-        disc = Client.objects.get(client_name=value['client']).price_disc
+        try:
+            disc = Client.objects.get(client_code=value['client']).price_disc
+        except:
+            return Response({"Fail": "Client ID does not match with Order"})
+
         for pack in value['packages']:
-            pk_info = Package.objects.get(pkg_name=pack['pak_type'])
+            pk_info = Package.objects.get(pk=pack['pak_type'])
             pack['ord_pak_price'] = CalcService.calcPrice(distance, disc, pack, pk_info)
             value['ord_price'] += pack['ord_pak_price']
-        print('--- Tiempo de ejecucion Order_validate: {} segundos ---'.format((time.time() - start_time)))
-        return value
-
-        print('--- Tiempo de ejecucion priceCalc: {} segundos ---'.format((time.time() - start_time)))
+        print('--- Tiempo de ejecucion PRICE_CALC_TO_INT: {} segundos ---'.format((time.time() - start_time)))
         return super().to_internal_value(value)
 
     def validate_origin_city(self, value):

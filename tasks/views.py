@@ -6,7 +6,7 @@ from rest_framework.response import Response
 # from ŕest_framework.permissions import AllowAny
 from .models import Order, OrderStatus
 from utils.models import Client
-from .serializers import OrderSerializer, ReturnSerializer, OrderStatusSerializer, OrderPriceSerializer
+from .serializers import OrderSerializer, ReturnSerializer, OrderStatusSerializer, OrderPriceSerializer, PriceCalcSerializer
 import time
 
 
@@ -27,7 +27,6 @@ class OrderList(APIView):
             ret_serializer = ReturnSerializer(Order.objects.get(pk=ord_serializer.data['id']))
             print('--- Tiempo de ejecucion TOTAL: {} segundos ---'.format((time.time() - start_time)))
             return Response(ret_serializer.data, status=status.HTTP_201_CREATED)
-        print(ord_serializer.errors)
         return Response(ord_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -120,5 +119,21 @@ class PriceDetail(APIView):
                 return Response(serializer.data)
             else:
                 return Response({"Fail": "Client ID does not match with Order"}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({"Fail": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class PriceCalculator(APIView):
+    """
+    Retrieve, update or delete an order.
+    """
+
+    def post(self, request, format_=None):
+        start_time = time.time()
+        try:
+            serializer = PriceCalcSerializer(data=request.data)
+            if serializer.is_valid():
+                print('--- Tiempo de ejecucion TOTAL: {} segundos ---'.format((time.time() - start_time)))
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
         except:
             return Response({"Fail": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
