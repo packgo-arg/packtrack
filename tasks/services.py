@@ -10,8 +10,13 @@ from rest_framework import serializers
 
 class DataService(object):
 
+    ## Class for declaring Service related functions. ##
+
     @staticmethod
     def getOrigin():
+
+        ## Get ORIGIN data if no origin was specified in the post request ##
+
         start_time = time.time()
         origin = {
             "name": "Deposito PackGo",
@@ -32,6 +37,9 @@ class DataService(object):
     @staticmethod
     def popData(data, location):
 
+        ## Populate Location Dictionary with data extracted from Google Maps API. ##
+        ## This Location can be for both Origin and Destination ##
+
         start_time = time.time()
 
         if data.get('long').get('country') == location['country'] and data.get('short').get('route'):
@@ -49,12 +57,20 @@ class DataService(object):
 
 class ValidateService(object):
 
+    ## Class for declaring Validation functions. ##
+
     @staticmethod
     def normalizeWord(word):
+
+        ## Return word converted to lowercase and stripped from accents. ##
+
         return unicodedata.normalize('NFKD', word.lower()).encode('ASCII', 'ignore').decode('utf-8')
 
     @staticmethod
     def listToAddr(location):
+
+        ## Returns an address string constructed from a Location dictionary. ##
+
         start_time = time.time()
         wk = [key for key in location.keys() if key in ('street', 'house_num', 'suburb', 'city', 'province', 'country', 'pos_code')]
         address = re.sub(',', '', ', '.join(value for value in dict(zip(wk, [location[k] for k in wk])).values() if value), 1)
@@ -64,8 +80,13 @@ class ValidateService(object):
 
 class LocationService(object):
 
+    ## Class for declaring functions related to location services and APIs. ##
+
     @staticmethod
     def getLocal(endpoint, param):
+
+        ## Validate Locality or City using https://datosgobar.github.io/georef-ar-api/ ##
+
         start_time = time.time()
         d = {}
         d[endpoint] = param
@@ -82,6 +103,9 @@ class LocationService(object):
 
     @staticmethod
     def getCoord(address):
+
+        ## Get coordinates for location using Google Maps Geolocation API ##
+
         start_time = time.time()
         gmaps = GoogleMaps(os.getenv("GOOGLE_KEY"))
         geocode_result = gmaps.geocode(address)
@@ -104,6 +128,9 @@ class LocationService(object):
 
     @staticmethod
     def getDeliveryTime(ori, dest):
+
+        ## Get routing time based on coordinates for origin and destination using HERE routing API. ##
+
         start_time = time.time()
 
         routingApi = herepy.RoutingApi(os.getenv("HERE_KEY"))
@@ -129,6 +156,8 @@ class CalcService(object):
 
     @staticmethod
     def calcPrice(km, disc, package, pkgType):
+
+        ## Calculate Delivery price ##
 
         start_time = time.time()
 
