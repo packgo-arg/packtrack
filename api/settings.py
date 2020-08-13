@@ -24,7 +24,7 @@ dotenv_file = os.path.join(BASE_DIR, ".env")
 ENV = False
 if os.path.isfile(dotenv_file):
     ENV = True
-    dotenv.load_dotenv(dotenv_file)
+    dotenv.load_dotenv(dotenv_file, override=True)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
@@ -35,7 +35,8 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 
 
-DEBUG = os.getenv("DEBUG")
+#DEBUG = os.getenv("DEBUG")
+print(os.getenv("DEBUG"))
 
 ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'packgo.com.ar', '172.17.0.1']
 
