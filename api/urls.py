@@ -33,5 +33,5 @@ urlpatterns = [
     path('core/', include('core.urls')),
     path('api/tasks/', include('tasks.urls')),
     #landing
-    #path('', views.index)
+    path('', views.index)
 ]

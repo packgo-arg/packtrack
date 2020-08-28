@@ -10,7 +10,14 @@ from rest_framework import serializers
 
 class DataService(object):
 
-    ## Class for declaring Service related functions. ##
+    """ Class for declaring Service related functions.
+
+    Raises:
+        serializers.ValidationError: [description]
+
+    Returns:
+        [type]: [description]
+    """
 
     @staticmethod
     def getOrigin():
@@ -157,7 +164,11 @@ class CalcService(object):
     @staticmethod
     def calcPrice(km, disc, package, pkgType):
 
-        ## Calculate Delivery price ##
+        """ Calculate Delivery price
+
+        Returns:
+            [int]: [Total price calculation based on size and quantity of packages in order]
+        """
 
         start_time = time.time()
 
