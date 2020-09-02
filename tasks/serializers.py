@@ -10,7 +10,9 @@ from rest_framework.response import Response
 
 class ReturnSerializer(serializers.ModelSerializer):
 
-    ## Serializer for returning Order Post Information ##
+    """
+    Serializer for returning Order Post Information
+    """
 
     class Meta:
         model = Order
@@ -25,7 +27,15 @@ class ReturnSerializer(serializers.ModelSerializer):
 
 class OrderStatusSerializer(serializers.ModelSerializer):
 
-    ## Serializer for handling Status query requests ##
+    """
+    Serializer for handling Status query requests
+
+    Raises:
+        serializers.ValidationError: 'Could not validate Locality'
+
+    Returns:
+        string: location instance
+    """
 
     location = serializers.SerializerMethodField()
 
@@ -49,7 +59,7 @@ class OrderStatusSerializer(serializers.ModelSerializer):
 
 class OriginSerializer(serializers.ModelSerializer):
 
-    ## Process Origin information ##
+    """Process Origin information"""
 
     class Meta:
         model = Origin
@@ -71,7 +81,18 @@ class OriginSerializer(serializers.ModelSerializer):
         print('--- INICIO ORIGIN_TO_INTERNAL ---')
         start_time = time.time()
 
-        ## Validate location using Validation Service ##
+        """Validate Origin location using Validation Service
+        Check if Coordinates data were passed in request.
+        If not, populate dict with Location Services.
+
+        Raises:
+            serializers.ValidationError: Could not validate
+            if locality received is among localities where
+            service is provided
+
+        Returns:
+            json: Origin model serializer
+        """
 
         try:
             req = LocationService.getLocal('localidades_censales', [dict(nombre=value['city'], provincia=value['province'])])
@@ -82,8 +103,6 @@ class OriginSerializer(serializers.ModelSerializer):
         except IndexError:
             raise serializers.ValidationError('Could not validate Locality')
 
-        ## Check if Coordinates data were passed in request. If not, populate dict with Location Services. ##
-
         if 'latitude' not in value.keys() or 'longitude' not in value.keys() or not value['latitude'] or not value['longitude']:
             orAdd = ValidateService.listToAddr(value)
             orData = LocationService.getCoord(orAdd)
@@ -93,7 +112,16 @@ class OriginSerializer(serializers.ModelSerializer):
 
     def validate_city(self, value):
 
-        ## Validate if Pack GO provide services in the area requested. This is done consulting the db. ##
+        """Validate if Pack GO provide services in the area requested.
+        This is done consulting the db.
+
+        Raises:
+            serializers.ValidationError: 'Origin address: Pack GO
+            does not provide services in that location'
+
+        Returns:
+            string : Origin city
+        """
 
         start_time = time.time()
         print('--- INICIO ORDER_VALIDATE_CITY ---')
@@ -108,7 +136,8 @@ class OriginSerializer(serializers.ModelSerializer):
 
 class DestinationSerializer(serializers.ModelSerializer):
 
-    ## Process Destination information ##
+    """Process Destination information
+    """
 
     class Meta:
         model = Destination
@@ -130,7 +159,17 @@ class DestinationSerializer(serializers.ModelSerializer):
         start_time = time.time()
         print('--- INICIO DEST_TO_INTERNAL ---')
 
-        ## Validate location using Validation Service ##
+        """Validate Destination location using Validation Service.
+        Check if Coordinates data were passed in request.
+        If not, populate dict with Location Services.
+
+        Raises:
+            serializers.ValidationError: 'Destination address: Pack GO
+            does not provide services in that location'
+
+        Returns:
+            json: Destination model serializer
+        """
 
         try:
             req = LocationService.getLocal('localidades_censales', [dict(nombre=value['city'], provincia=value['province'])])
@@ -141,8 +180,6 @@ class DestinationSerializer(serializers.ModelSerializer):
         except IndexError:
             raise serializers.ValidationError('Could not validate locality')
 
-        ## Check if Coordinates data were passed in request. If not, populate dict with Location Services. ##
-
         if 'latitude' not in value.keys() or 'longitude' not in value.keys() or not value['latitude'] or not value['longitude']:
             destAdd = ValidateService.listToAddr(value)
             destData = LocationService.getCoord(destAdd)
@@ -152,7 +189,16 @@ class DestinationSerializer(serializers.ModelSerializer):
 
     def validate_city(self, value):
 
-        ## Validate if Pack GO provide services in the area requested. This is done consulting the db. ##
+        """Validate if Pack GO provide services in the area requested.
+        This is done consulting the db. 
+
+        Raises:
+            serializers.ValidationError: Destination address: Pack GO does
+            not provide services in that location
+
+        Returns:
+            string: location
+        """
 
         start_time = time.time()
         print('--- INICIO DEST_VALIDATE_CITY ---')
@@ -166,6 +212,9 @@ class DestinationSerializer(serializers.ModelSerializer):
 
 
 class PackageSerializer(serializers.ModelSerializer):
+
+    """ Package Serializer to receive nested order package information.
+    """
     class Meta:
         model = OrderPackage
         fields = (
@@ -177,110 +226,26 @@ class PackageSerializer(serializers.ModelSerializer):
 
 class OrderPriceSerializer(serializers.ModelSerializer):
 
-    ## Process Order Price Calculator requests ##
+    """ Process Order Price Calculator requests with information regarding price of an estimated package delivery
+    """
 
     packages = PackageSerializer(many=True)
 
     class Meta:
         model = Order
         fields = (
-            'id',
-            'request_id',
-            'created_at',
+            #'id',
             'ord_price',
             'packages'
         )
-
-
-class PriceCalcSerializer(serializers.Serializer):
-
-    ## Process Price Calculator requests ##
-
-    origin_city = serializers.CharField(max_length=50)
-    origin_province = serializers.CharField(max_length=50)
-    dest_city = serializers.CharField(max_length=50)
-    dest_province = serializers.CharField(max_length=50)
-    ord_price = serializers.FloatField(default=0)
-    packages = PackageSerializer(many=True)
-
-
-    def to_internal_value(self, value):
-        start_time = time.time()
-        print('--- INICIO PRICE_CALC_TO_INT ---')
-
-        ## Validate Origin and Destination location using Validation Service ##
-
-        try:
-            ori = LocationService.getLocal('localidades_censales', [dict(nombre=value['origin_city'], provincia=value['origin_province'])])
-            value['origin_city'] = ori.get('nombre', None)
-            value['origin_province'] = ori.get('provincia', None).get('nombre', None)
-        except IndexError:
-            raise serializers.ValidationError('Could not validate Origin locality')
-        try:
-            dest = LocationService.getLocal('localidades_censales', [dict(nombre=value['dest_city'], provincia=value['dest_province'])])
-            value['dest_city'] = dest.get('nombre', None)
-            value['dest_province'] = dest.get('provincia', None).get('nombre', None)
-        except IndexError:
-            raise serializers.ValidationError('Could not validate Destnation locality')
-
-        orCoord, destCoord = {}, {}
-        orAdd = ValidateService.listToAddr(dict(city=value['origin_city'], province=value['origin_province']))
-        orData = LocationService.getCoord(orAdd)
-        orCoord['lat'] = orData.get('location', None).get('lat', None)
-        orCoord['lng'] = orData.get('location', None).get('lng', None)
-        destAdd = ValidateService.listToAddr(dict(city=value['dest_city'], province=value['dest_province']))
-        destData = LocationService.getCoord(destAdd)
-        destCoord['lat'] = destData.get('location', None).get('lat', None)
-        destCoord['lng'] = destData.get('location', None).get('lng', None)
-
-        try:
-            duration, distance = LocationService.getDeliveryTime(dict(latitude=orCoord['lat'], longitude=orCoord['lng']), dict(latitude=destCoord['lat'], longitude=orCoord['lng']))
-        except:
-            raise serializers.ValidationError('Could not parse coordinates')
-
-        value['ord_price'] = 0
-        try:
-            disc = Client.objects.get(client_code=value['client']).price_disc
-        except:
-            return Response({"Fail": "Client ID does not match with Order"})
-
-        for pack in value['packages']:
-            pk_info = Package.objects.get(pk=pack['pak_type'])
-            pack['ord_pak_price'] = CalcService.calcPrice(distance, disc, pack, pk_info)
-            value['ord_price'] += pack['ord_pak_price']
-        print('--- Tiempo de ejecucion PRICE_CALC_TO_INT: {} segundos ---'.format((time.time() - start_time)))
-        return super().to_internal_value(value)
-
-    def validate_origin_city(self, value):
-
-        ## Validate Origin location against PackGo db ##
-
-        start_time = time.time()
-        print('--- INICIO VALIDATE_CALC_ORIGIN_CITY ---')
-        try:
-            State.objects.get(city__unaccent__iexact=ValidateService.normalizeWord(value))
-            print('--- Tiempo de ejecucion Calc_Origin_City_Validation: {} segundos ---'.format((time.time() - start_time)))
-            return value
-        except:
-            print('--- Tiempo de ejecucion Calc_Origin_City_Validation (fail): {} segundos ---'.format((time.time() - start_time)))
-            raise serializers.ValidationError('Destination address: Pack GO does not provide services in that location')
-
-    def validate_dest_city(self, value):
-
-        ## Validate Destination location against PackGo db ##
-
-        start_time = time.time()
-        print('--- INICIO VALIDATE_CALC_DEST_CITY ---')
-        try:
-            State.objects.get(city__unaccent__iexact=ValidateService.normalizeWord(value))
-            print('--- Tiempo de ejecucion Calc_Dest_City_Validation: {} segundos ---'.format((time.time() - start_time)))
-            return value
-        except:
-            print('--- Tiempo de ejecucion Calc_Dest_City_Validation (fail): {} segundos ---'.format((time.time() - start_time)))
-            raise serializers.ValidationError('Destination address: Pack GO does not provide services in that location')
+        #depth = 1
 
 
 class OrderSerializer(serializers.ModelSerializer):
+
+    """ Order Serializer. Serialize order information.
+
+    """
     origins = OriginSerializer(required=False)
     destinations = DestinationSerializer()
     packages = PackageSerializer(many=True)
@@ -307,8 +272,12 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, value):
 
-        ## Convert client code to client_id for db write ##
+        """ Convert client code to client_id for db write.
 
+
+        Returns:
+            json: order request pre processed data.
+        """
         start_time = time.time()
         print('--- INICIO ORDER_TO_INTERNAL ---')
 
@@ -323,7 +292,14 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def validate(self, value):
 
-        ## Calculate delivery time and order price with services functions ##
+        """ Calculate delivery time and order price with services functions.
+
+        Raises:
+            serializers.ValidationError: Could not get delivery time.
+
+        Returns:
+            json: order request validated data.
+        """
 
         start_time = time.time()
         print('--- INICIO ORDER_VALIDATE ---')
@@ -350,7 +326,11 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
 
-        ## Override default serializer create method to include nested serializers ##
+        """ Override default serializer create method to include nested serializers.
+
+        Returns:
+            serialized object: Order serialized data.
+        """
         
         origin_data = validated_data.pop('origins')
         dest_data = validated_data.pop('destinations')

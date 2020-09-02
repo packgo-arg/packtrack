@@ -3,11 +3,14 @@ from rest_framework import status
 # from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
-# from ŕest_framework.permissions import AllowAny
+from rest_framework.renderers import JSONRenderer
+from rest_framework.parsers import JSONParser
 from .models import Order, OrderStatus
 from utils.models import Client
 from .serializers import OrderSerializer, ReturnSerializer, OrderStatusSerializer, OrderPriceSerializer, PriceCalcSerializer
 import time
+import unicodedata
+import io
 
 
 class OrderList(APIView):
@@ -128,12 +131,13 @@ class PriceCalculator(APIView):
     Retrieve, update or delete an order.
     """
 
-    def post(self, request, format_=None):
+    def post(self, request, format=None):
         start_time = time.time()
-        try:
-            serializer = PriceCalcSerializer(data=request.data)
-            if serializer.is_valid():
-                print('--- Tiempo de ejecucion TOTAL: {} segundos ---'.format((time.time() - start_time)))
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except:
-            return Response({"Fail": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+        ord_serializer = OrderSerializer(data=request.data)
+        if ord_serializer.is_valid():
+            data = JSONParser().parse(io.BytesIO(JSONRenderer().render(ord_serializer.data)))
+            ret_serializer = OrderPriceSerializer(data=data)
+            ret_serializer.is_valid()
+            print('--- Tiempo de ejecucion TOTAL: {} segundos ---'.format((time.time() - start_time)))
+            return Response(ret_serializer.data, status=status.HTTP_200_OK)
+        return Response(ord_serializer.errors, status=status.HTTP_400_BAD_REQUEST)

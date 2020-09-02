@@ -12,17 +12,16 @@ class DataService(object):
 
     """ Class for declaring Service related functions.
 
-    Raises:
-        serializers.ValidationError: [description]
-
-    Returns:
-        [type]: [description]
     """
 
     @staticmethod
     def getOrigin():
 
-        ## Get ORIGIN data if no origin was specified in the post request ##
+        """Get ORIGIN data if no origin was specified in the post request
+
+        Returns:
+            json: returns fixed origin values.
+        """
 
         start_time = time.time()
         origin = {
@@ -44,8 +43,16 @@ class DataService(object):
     @staticmethod
     def popData(data, location):
 
-        ## Populate Location Dictionary with data extracted from Google Maps API. ##
-        ## This Location can be for both Origin and Destination ##
+        """ Populate Location Dictionary with data extracted from Google Maps API.
+        This Location can be for both Origin and Destination.
+
+        Raises:
+            serializers.ValidationError: Validates that the returned country Geocoding values from Google API
+            are the same as the one sent by the client.
+
+        Returns:
+            dictionary: location data.
+        """
 
         start_time = time.time()
 
@@ -64,19 +71,29 @@ class DataService(object):
 
 class ValidateService(object):
 
-    ## Class for declaring Validation functions. ##
+    """ Class for declaring Validation functions.
+
+    """
 
     @staticmethod
     def normalizeWord(word):
 
-        ## Return word converted to lowercase and stripped from accents. ##
+        """ Return word converted to lowercase and stripped from accents.
+
+        Returns:
+            string: string normalized with lowercase and without accents.
+        """
 
         return unicodedata.normalize('NFKD', word.lower()).encode('ASCII', 'ignore').decode('utf-8')
 
     @staticmethod
     def listToAddr(location):
 
-        ## Returns an address string constructed from a Location dictionary. ##
+        """ Returns an address string constructed from a Location dictionary.
+
+        Returns:
+            string: address string constructed from a Location dictionary.
+        """
 
         start_time = time.time()
         wk = [key for key in location.keys() if key in ('street', 'house_num', 'suburb', 'city', 'province', 'country', 'pos_code')]
@@ -87,12 +104,18 @@ class ValidateService(object):
 
 class LocationService(object):
 
-    ## Class for declaring functions related to location services and APIs. ##
+    """ Class for declaring functions related to location services and APIs.
+
+    """
 
     @staticmethod
     def getLocal(endpoint, param):
 
-        ## Validate Locality or City using https://datosgobar.github.io/georef-ar-api/ ##
+        """ Validate Locality or City using https://datosgobar.github.io/georef-ar-api/
+
+        Returns:
+            json: response with city normalization from https://datosgobar.github.io/georef-ar-api/ 
+        """
 
         start_time = time.time()
         d = {}
@@ -111,7 +134,15 @@ class LocationService(object):
     @staticmethod
     def getCoord(address):
 
-        ## Get coordinates for location using Google Maps Geolocation API ##
+        """ Get coordinates for location using Google Maps Geolocation API.
+
+        Raises:
+            serializers.ValidationError: Google Maps API could not find pair of
+            coordinates suitable for address passed as input.
+
+        Returns:
+            dictionary: Geocoding information.
+        """
 
         start_time = time.time()
         gmaps = GoogleMaps(os.getenv("GOOGLE_KEY"))
@@ -136,7 +167,11 @@ class LocationService(object):
     @staticmethod
     def getDeliveryTime(ori, dest):
 
-        ## Get routing time based on coordinates for origin and destination using HERE routing API. ##
+        """ Get routing time based on coordinates for origin and destination using HERE routing API.
+
+        Returns:
+            string: Returns delivery time and distance calculated with Here API.
+        """
 
         start_time = time.time()
 
@@ -167,7 +202,7 @@ class CalcService(object):
         """ Calculate Delivery price
 
         Returns:
-            [int]: [Total price calculation based on size and quantity of packages in order]
+            int: Total price calculation based on size and quantity of packages in order
         """
 
         start_time = time.time()
