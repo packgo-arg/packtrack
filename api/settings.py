@@ -36,7 +36,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 
 DEBUG = os.getenv("DEBUG")
-print(os.getenv("DEBUG"))
+print("DEBUG:", os.getenv("DEBUG"))
 
 ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'packgo.com.ar', '172.17.0.1']
 

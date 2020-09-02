@@ -7,7 +7,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 from .models import Order, OrderStatus
 from utils.models import Client
-from .serializers import OrderSerializer, ReturnSerializer, OrderStatusSerializer, OrderPriceSerializer, PriceCalcSerializer
+from .serializers import OrderSerializer, ReturnSerializer, OrderStatusSerializer, OrderPriceSerializer
 import time
 import unicodedata
 import io
