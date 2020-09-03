@@ -190,7 +190,7 @@ class DestinationSerializer(serializers.ModelSerializer):
     def validate_city(self, value):
 
         """Validate if Pack GO provide services in the area requested.
-        This is done consulting the db. 
+        This is done consulting the db.
 
         Raises:
             serializers.ValidationError: Destination address: Pack GO does
@@ -331,7 +331,6 @@ class OrderSerializer(serializers.ModelSerializer):
         Returns:
             serialized object: Order serialized data.
         """
-        
         origin_data = validated_data.pop('origins')
         dest_data = validated_data.pop('destinations')
         pkg_data = validated_data.pop('packages')

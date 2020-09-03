@@ -9,7 +9,6 @@ from .models import Order, OrderStatus
 from utils.models import Client
 from .serializers import OrderSerializer, ReturnSerializer, OrderStatusSerializer, OrderPriceSerializer
 import time
-import unicodedata
 import io
 
 
