@@ -46,6 +46,7 @@ ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'packgo.com.ar', '172.17.0.1']
 # Application definition
 
 INSTALLED_APPS = [
+    'whitenoise.runserver_nostatic',
     'jet',
     'django.contrib.admin',
     'django.contrib.auth',
