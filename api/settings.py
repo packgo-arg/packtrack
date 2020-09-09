@@ -166,7 +166,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 #STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+STATICFILES_STORAGE = 'api.storage.WhiteNoiseStaticFilesStorage''
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 sys.path.append(os.path.join(PROJECT_ROOT, 'tasks/lib'))
