@@ -197,7 +197,7 @@ class LocationService(object):
 class CalcService(object):
 
     @staticmethod
-    def calcPrice(km, disc, package, pkgType):
+    def calcOrderPrice(km, package, pkgType):
 
         """ Calculate Delivery price
 
@@ -214,6 +214,7 @@ class CalcService(object):
         else:
             mult = int(r[km // 25])**pkgType.pkg_coef
 
+        ''' DEPRECATED
         if 10 < package.get('quantity') < 20:
             disc += 0.1
         elif 20 < package.get('quantity') < 30:
@@ -224,7 +225,8 @@ class CalcService(object):
             disc += 0.4
 
         base = pkgType.pkg_price - (pkgType.pkg_price * disc)
-        total = (base * mult) * package.get('quantity')
+        '''
+        total = package.get('pack_price') * mult
 
         print('--- Tiempo de ejecucion calcPrice: {} segundos ---'.format((time.time() - start_time)))
 

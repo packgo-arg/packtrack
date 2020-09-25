@@ -69,9 +69,14 @@ class Destination(models.Model):
 class OrderPackage(models.Model):
 
     order = models.ForeignKey(Order, related_name='packages', on_delete=models.CASCADE)
-    pak_type = models.ForeignKey(Package, on_delete=models.CASCADE, null=True)
+    pack_type = models.ForeignKey(Package, on_delete=models.CASCADE, null=True)
+    height = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    width = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    length = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    volume = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    weight = models.FloatField(default=0, validators=[MinValueValidator(0)])
     quantity = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(99)])
-    ord_pak_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    pack_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
 
     def __int__(self):
         return self.id
@@ -82,7 +87,7 @@ class OrderStatus(models.Model):
     order = models.ForeignKey(Order, related_name='ord_status', on_delete=models.CASCADE)
     status = models.ForeignKey(Status, on_delete=models.CASCADE, default=1)
     provider = models.ForeignKey(Provider, on_delete=models.CASCADE, default=1)
-    driver = models.ForeignKey(Driver, on_delete=models.CASCADE, null=True)
+    driver = models.ForeignKey(Driver, on_delete=models.CASCADE, null=True, blank=True)
     location = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
     description = models.CharField(max_length=150, null=True, blank=True)
     st_update = models.DateTimeField(auto_now_add=True)

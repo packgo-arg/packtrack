@@ -39,7 +39,6 @@ if os.getenv("DEBUG") == 'True':
 else:
     DEBUG = False
 
-print("DEBUG:", DEBUG)
 
 ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'packgo.com.ar', '172.17.0.1']
 
@@ -157,7 +156,7 @@ USE_TZ = True
 
 # Sessions
 
-SESSION_COOKIE_AGE = 300
+SESSION_COOKIE_AGE = 1800
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 

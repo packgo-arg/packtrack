@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.core.validators import MaxValueValidator, MinValueValidator
 from tasks.services import LocationService
@@ -10,7 +11,7 @@ class Package(models.Model):
     pkg_name = models.CharField(max_length=20, unique=True)
     pkg_code = models.CharField(max_length=2, unique=True)
     pkg_description = models.CharField(max_length=100, null=True, blank=True)
-    pkg_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    #pkg_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
     pkg_coef = models.FloatField(default=0, validators=[MinValueValidator(0)])
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -82,11 +83,22 @@ class Driver(models.Model):
 
 class Client(models.Model):
     # required fields
+    PRICE_CALC = ( 
+    (0, "Variable"), 
+    (1, "Fixed"), 
+)
+    PACKAGE_CAPACITY = ( 
+    (0, "Volume"), 
+    (1, "Weight"), 
+)
+    username = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     client_name = models.CharField(max_length=20, unique=True)
     client_code = models.CharField(max_length=2, unique=True)
     state_code = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
-    price_disc = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(1)])
-    cust_rule = models.CharField(max_length=20, null=True, blank=True)
+    price_calc = models.PositiveIntegerField(default=0, choices=PRICE_CALC)
+    unit_type = models.PositiveIntegerField(default=0, choices=PACKAGE_CAPACITY)
+    base_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    unit_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -44,14 +44,24 @@ class OrderStatusSerializer(serializers.ModelSerializer):
         fields = (
             'order',
             'status',
+            'driver',
             'location',
             'description',
             'st_update'
         )
+    
+    def get_driver(self, obj):
+        try:
+            driver_inst = Driver.objects.get(pk=obj.driver_id)
+            print(driver_inst.driv_name)
+            return driver_inst.driv_name
+        except Status.DoesNotExist:
+            raise serializers.ValidationError('Could not validate Driver')
 
     def get_location(self, obj):
         try:
             location_inst = State.objects.get(pk=obj.location_id)
+            print(location_inst.city)
             return location_inst.city
         except Status.DoesNotExist:
             raise serializers.ValidationError('Could not validate Locality')
@@ -124,7 +134,7 @@ class OriginSerializer(serializers.ModelSerializer):
         """
 
         start_time = time.time()
-        print('--- INICIO ORDER_VALIDATE_CITY ---')
+        print('--- INICIO ORIGIN_VALIDATE_CITY ---')
         try:
             State.objects.get(city__unaccent__iexact=ValidateService.normalizeWord(value))
             print('--- Tiempo de ejecucion Origin_validate_city: {} segundos ---'.format((time.time() - start_time)))
@@ -218,9 +228,75 @@ class PackageSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderPackage
         fields = (
-            'pak_type',
+            'pack_type',
+            'height', 
+            'width',
+            'length',
+            'volume',
+            'weight',
             'quantity',
-            'ord_pak_price'
+            'pack_price',
+        )
+    
+    def _user(self, obj):
+        request = self.context.get('request', None)
+        if request:
+            return request.user
+
+    def validate(self, value):
+
+        """ Calculate delivery time and order price with services functions.
+
+        Raises:
+            serializers.ValidationError: Could not get delivery time.
+
+        Returns:
+            json: order request validated data.
+        """
+
+        start_time = time.time()
+        print('--- INICIO PACKAGE_VALIDATE ---')
+        pk_info = Package.objects.get(pkg_name=value['pack_type'])
+        client_inst = Client.objects.get(id=self.root.initial_data['client'])
+
+        if pk_info.id == 1:
+            value['pack_price'] = client_inst.base_price * value['quantity']
+        elif pk_info.id == 3:
+            value['height'] = 2000
+            value['width'] = 1000
+            value['length'] = 1000
+            value['volume'] = value.get('height') * value.get('width') * value.get('length') / 1000**3
+            value['pack_price'] = client_inst.base_price + (value['quantity'] * client_inst.unit_price * value['volume'])
+        else:
+            if client_inst.price_calc == 1:
+                value['pack_price'] = client_inst.base_price * value['quantity']
+            else:
+                if client_inst.unit_type == 0:
+                    try:
+                        value['volume'] = value.get('height') * value.get('width') * value.get('length') / 1000**3
+                    except:
+                        raise serializers.ValidationError('Missing measure')
+
+                    value['pack_price'] = client_inst.base_price + (value['quantity'] * client_inst.unit_price * value['volume'])
+
+        print('--- Tiempo de ejecucion Package_validate: {} segundos ---'.format((time.time() - start_time)))
+        return value
+
+class PackCalcSerializer(serializers.ModelSerializer):
+
+    """ Process Order Price Calculator requests with information regarding price of an estimated package delivery
+    """
+    class Meta:
+        model = OrderPackage
+        fields = (
+            'pack_type',
+            'height', 
+            'width',
+            'length',
+            'volume',
+            'weight',
+            'quantity',
+            'pack_price',
         )
 
 
@@ -229,17 +305,14 @@ class OrderPriceSerializer(serializers.ModelSerializer):
     """ Process Order Price Calculator requests with information regarding price of an estimated package delivery
     """
 
-    packages = PackageSerializer(many=True)
-
+    packages = PackCalcSerializer(many=True) 
     class Meta:
         model = Order
         fields = (
-            #'id',
+            'id',
             'ord_price',
             'packages'
         )
-        #depth = 1
-
 
 class OrderSerializer(serializers.ModelSerializer):
 
@@ -281,7 +354,7 @@ class OrderSerializer(serializers.ModelSerializer):
         start_time = time.time()
         print('--- INICIO ORDER_TO_INTERNAL ---')
 
-        client_inst = Client.objects.get(client_code=value['client'])
+        client_inst = Client.objects.get(username=self.context['request'].user)
 
         value['client'] = client_inst.id
 
@@ -316,11 +389,11 @@ class OrderSerializer(serializers.ModelSerializer):
         value['end_time'] = value['start_time'] + dt.timedelta(hours=int(value['duration']))
 
         value['ord_price'] = 0
-        disc = Client.objects.get(client_name=value['client']).price_disc
+
         for pack in value['packages']:
-            pk_info = Package.objects.get(pkg_name=pack['pak_type'])
-            pack['ord_pak_price'] = CalcService.calcPrice(distance, disc, pack, pk_info)
-            value['ord_price'] += pack['ord_pak_price']
+            pk_info = Package.objects.get(pkg_name=pack['pack_type'])
+            pack['pack_price'] = CalcService.calcOrderPrice(distance, pack, pk_info)
+            value['ord_price'] += pack['pack_price']
         print('--- Tiempo de ejecucion Order_validate: {} segundos ---'.format((time.time() - start_time)))
         return value
 
