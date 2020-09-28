@@ -290,11 +290,6 @@ class PackCalcSerializer(serializers.ModelSerializer):
         model = OrderPackage
         fields = (
             'pack_type',
-            'height', 
-            'width',
-            'length',
-            'volume',
-            'weight',
             'quantity',
             'pack_price',
         )
@@ -310,6 +305,8 @@ class OrderPriceSerializer(serializers.ModelSerializer):
         model = Order
         fields = (
             'id',
+            'request_id',
+            'created_at',
             'ord_price',
             'packages'
         )
