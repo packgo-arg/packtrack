@@ -11,7 +11,7 @@ class Package(models.Model):
     pkg_name = models.CharField(max_length=20, unique=True)
     pkg_code = models.CharField(max_length=2, unique=True)
     pkg_description = models.CharField(max_length=100, null=True, blank=True)
-    pkg_fixed = models.IntegerField(default=0, validators=[MinValueValidator(0)], validators=[MaxValueValidator(1)])
+    pkg_fixed = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(1)])
     height = models.FloatField(default=0, validators=[MinValueValidator(0)])
     width = models.FloatField(default=0, validators=[MinValueValidator(0)])
     length = models.FloatField(default=0, validators=[MinValueValidator(0)])
