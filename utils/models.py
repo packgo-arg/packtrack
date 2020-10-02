@@ -8,6 +8,11 @@ from tasks.services import LocationService
 # Create your models here.
 
 class Package(models.Model):
+    
+    PACKAGE_FIXED = ( 
+    (0, "Fixed"), 
+    (1, "Variable"), 
+)
     pkg_name = models.CharField(max_length=20, unique=True)
     pkg_code = models.CharField(max_length=2, unique=True)
     pkg_description = models.CharField(max_length=100, null=True, blank=True)

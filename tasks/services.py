@@ -58,8 +58,8 @@ class DataService(object):
 
         if data.get('long').get('country') == location['country'] and data.get('short').get('route'):
             location['street'] = data.get('short').get('route')
-            location['city'] = data.get('short').get('locality')
-            location['province'] = data.get('long').get('administrative_area_level_1')
+            #location['city'] = data.get('short').get('locality')
+            #location['province'] = data.get('long').get('administrative_area_level_1')
             location['latitude'] = data.get('location').get('lat')
             location['longitude'] = data.get('location').get('lng')
         else:
