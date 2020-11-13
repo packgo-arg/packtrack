@@ -90,7 +90,7 @@ local_settings.py
 .env
 db.sqlite3
 *.ipynb
-Dockerfile
+Dockerfile*
 docker-compose.yml
 *.xlsx
 *.csv
@@ -99,3 +99,4 @@ docker-compose.yml
 order.json
 *.geojson
 /tasks/lib
+.vscode
