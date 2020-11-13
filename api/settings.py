@@ -15,7 +15,6 @@ import sys
 import dj_database_url
 import dotenv
 from datetime import timedelta
-import django_heroku
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -34,11 +33,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-if os.getenv("DEBUG") == 'True':
-    DEBUG = True
-else:
-    DEBUG = False
-
+DEBUG = bool(os.environ.get("DEBUG", default=0))
 
 ALLOWED_HOSTS = ['*']
 
@@ -119,9 +114,19 @@ WSGI_APPLICATION = 'api.wsgi.application'
 
 # POSTGRESQL
 
-DATABASES = {}
-DATABASES['default'] = dj_database_url.config(conn_max_age=600)
+#DATABASES = {}
+#DATABASES['default'] = dj_database_url.config(conn_max_age=600)
 
+DATABASES = {
+    "default": {
+        "ENGINE": os.environ.get("SQL_ENGINE", "django.db.backends.sqlite3"),
+        "NAME": os.environ.get("SQL_DATABASE", os.path.join(BASE_DIR, "db.sqlite3")),
+        "USER": os.environ.get("SQL_USER", "user"),
+        "PASSWORD": os.environ.get("SQL_PASSWORD", "password"),
+        "HOST": os.environ.get("SQL_HOST", "localhost"),
+        "PORT": os.environ.get("SQL_PORT", "5432"),
+    }
+}
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 
@@ -164,18 +169,22 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-#STATICFILES_STORAGE = 'api.storage.WhiteNoiseStaticFilesStorage'
-STATIC_URL = '/static/'
+#STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'api.storage.WhiteNoiseStaticFilesStorage'
+STATIC_URL = '/staticfiles/'
 STATIC_ROOT = os.path.join(PROJECT_ROOT, 'staticfiles')
 sys.path.append(os.path.join(PROJECT_ROOT, 'tasks/lib'))
 
 JET_DEFAULT_THEME = 'default'
 JET_SIDE_MENU_COMPACT = True
+#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+#SECURE_SSL_REDIRECT = True
+#SESSION_COOKIE_SECURE = True
+#CSRF_COOKIE_SECURE = True
+LOG_LEVEL = bool(os.environ.get("LOG_LEVEL", default=0))
 
-if not ENV:
-    django_heroku.settings(locals())
-
+if LOG_LEVEL == 1:
+    
     LOGGING = {
         'version': 1,
         'disable_existing_loggers': False,
