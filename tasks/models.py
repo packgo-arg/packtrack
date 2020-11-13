@@ -23,7 +23,7 @@ class Order(models.Model):
 
     def __str__(self):
         """A string representation of the model."""
-        return self.title
+        return self.title +' '+self.request_id
 
 
 class Origin(models.Model):

@@ -7,7 +7,6 @@ import time
 from .services import DataService, ValidateService, LocationService, CalcService
 from rest_framework.response import Response
 
-
 class ReturnSerializer(serializers.ModelSerializer):
 
     """
@@ -351,9 +350,9 @@ class OrderSerializer(serializers.ModelSerializer):
         start_time = time.time()
         print('--- INICIO ORDER_TO_INTERNAL ---')
 
-        client_inst = Client.objects.get(username=self.context['request'].user)
+        #client_inst = Client.objects.get(username=self.context['request'].user)
 
-        value['client'] = client_inst.id
+        #value['client'] = client_inst.id
 
         if 'origins' not in value.keys():
             value['origins'] = dict(DataService.getOrigin())

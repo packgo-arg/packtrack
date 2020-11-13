@@ -8,20 +8,25 @@ from utils.models import Client
 from .serializers import OrderSerializer, ReturnSerializer, OrderStatusSerializer, OrderPriceSerializer
 import time
 import io
-
+from itertools import chain
 
 class OrderList(APIView):
     """
     List all tasks, or create a new task
     """
     def get(self, request, format=None):
+
+        combined = [Order.objects.filter(client=client.id) for client in Client.objects.filter(users=self.request.user)]
+        comb = list(chain.from_iterable(combined))
        
-        client_id = Client.objects.get(username=self.request.user).id
-        orders = Order.objects.filter(client=client_id)
-        serializer = OrderSerializer(orders, many=True)
+        serializer = OrderSerializer(comb, many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):
+        try:
+            Client.objects.get(id=request.data['client'], users=self.request.user)
+        except:
+            return Response({"Fail": "User logged not found in Client Database"}, status=status.HTTP_404_NOT_FOUND)
         start_time = time.time()
         ord_serializer = OrderSerializer(data=request.data, context={'request': request})
         if ord_serializer.is_valid():
@@ -37,7 +42,10 @@ class OrderDetail(APIView):
     Retrieve, update or delete an order.
     """
     def get_object(self, pk):
-        client_id = Client.objects.get(username=self.request.user).id
+        try:
+            client_id = Client.objects.get(id=request.data['client'], users=self.request.user).id
+        except:
+            return Response({"Fail": "User logged not found in Client Database"}, status=status.HTTP_404_NOT_FOUND)
         try:
             order = Order.objects.get(pk=pk, client=client_id)
             return order
@@ -45,7 +53,10 @@ class OrderDetail(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
     def get(self, request, pk, format_=None):
-        client_id = Client.objects.get(username=self.request.user).id
+        try:
+            client_id = Client.objects.get(id=request.data['client'], users=self.request.user).id
+        except:
+            return Response({"Fail": "User logged not found in Client Database"}, status=status.HTTP_404_NOT_FOUND)
         try:
             order = Order.objects.get(pk=pk, client=client_id)
             serializer = OrderSerializer(order)
@@ -54,7 +65,10 @@ class OrderDetail(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
     def put(self, request, pk, format=None):
-        client_id = Client.objects.get(username=self.request.user).id
+        try:
+            client_id = Client.objects.get(id=request.data['client'], users=self.request.user).id
+        except:
+            return Response({"Fail": "User logged not found in Client Database"}, status=status.HTTP_404_NOT_FOUND)
         try:
             order = Order.objects.get(pk=pk, client=client_id)
             serializer = OrderSerializer(order, data=request.data)
@@ -66,7 +80,10 @@ class OrderDetail(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
     def delete(self, request, pk, format=None):
-        client_id = Client.objects.get(username=self.request.user).id
+        try:
+            client_id = Client.objects.get(id=request.data['client'], users=self.request.user).id
+        except:
+            return Response({"Fail": "User logged not found in Client Database"}, status=status.HTTP_404_NOT_FOUND)
         try:
             order = Order.objects.get(pk=pk, client=client_id)
             order.delete()
@@ -88,9 +105,12 @@ class StatusDetail(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
     def get(self, request, format_=None):
-
         try:
-            Order.objects.get(pk=request.data['order'], client=Client.objects.get(username=self.request.user).id)
+            client_id = Client.objects.get(id=request.data['client'], users=self.request.user).id
+        except:
+            return Response({"Fail": "User logged not found in Client Database"}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            Order.objects.get(pk=request.data['order'], client=client_id)
             order_status = OrderStatus.objects.filter(order_id=request.data['order']).last()
             serializer = OrderStatusSerializer(order_status)
             return Response(serializer.data)
@@ -111,9 +131,13 @@ class PriceDetail(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
     def get(self, request, format_=None):
+        try:
+            client_id = Client.objects.get(id=request.data['client'], users=self.request.user).id
+        except:
+            return Response({"Fail": "User logged not found in Client Database"}, status=status.HTTP_404_NOT_FOUND)
         
         try:
-            Order.objects.get(pk=request.data['order'], client=Client.objects.get(username=self.request.user).id)
+            Order.objects.get(pk=request.data['order'], client=client_id)
             order = Order.objects.get(pk=request.data['order'])
             serializer = OrderPriceSerializer(order)
             return Response(serializer.data)

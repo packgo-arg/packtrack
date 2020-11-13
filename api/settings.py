@@ -40,7 +40,7 @@ else:
     DEBUG = False
 
 
-ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'packgo.com.ar', '172.17.0.1']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'tasks.apps.TasksConfig',
     'utils.apps.UtilsConfig',
     'landing.apps.LandingConfig',
+    'import_export',
 ]
 
 MIDDLEWARE = [
@@ -115,7 +116,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'api.wsgi.application'
-
 
 # POSTGRESQL
 

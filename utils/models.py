@@ -107,7 +107,7 @@ class Client(models.Model):
     (0, "Volume"), 
     (1, "Weight"), 
 )
-    username = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    users = models.ManyToManyField(User)
     client_name = models.CharField(max_length=20, unique=True)
     client_code = models.CharField(max_length=2, unique=True)
     state_code = models.ForeignKey(State, on_delete=models.CASCADE, null=True)

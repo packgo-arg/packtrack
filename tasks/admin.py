@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.http import HttpResponse
 from django.utils import timezone
+from import_export import resources, fields
+from import_export.admin import ImportExportModelAdmin, ImportExportActionModelAdmin
+from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from .models import *
 from utils.models import *
 
@@ -42,7 +45,7 @@ class OrderAdmin(admin.ModelAdmin):
                      'fields': ('created_at', 'start_time', 'end_time', 'duration')
                  }),
                  )
-    readonly_fields = ['id', 'created_at', 'client', 'request_id']
+    readonly_fields = ['id', 'created_at']
 
     # list of fields to display in django admin
     list_display = ('title', 'id', 'client', 'created_at')
@@ -55,7 +58,7 @@ class OrderAdmin(admin.ModelAdmin):
     # inlines
     inlines = (OriginItemInline, DestinationItemInline, PackageItemInline, OrderStatusInline,)
 
-    def export_xlsx(modeladmin, request, queryset):
+def export_xlsx(modeladmin, request, queryset):
 
         import openpyxl
         import re
