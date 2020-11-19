@@ -56,6 +56,9 @@ INSTALLED_APPS = [
     'utils.apps.UtilsConfig',
     'landing.apps.LandingConfig',
     'import_export',
+    'django.contrib.gis',
+    'rest_framework_gis',
+    'mapwidgets',
 ]
 
 MIDDLEWARE = [
@@ -145,6 +148,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+MAP_WIDGETS = {
+    "GooglePointFieldWidget": (
+        ("zoom", 15),
+        ("mapCenterLocationName", 'Argentina'),
+    ),
+    "GOOGLE_MAP_API_KEY": os.getenv("GOOGLE_KEY")
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/

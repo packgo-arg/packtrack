@@ -58,10 +58,7 @@ class DataService(object):
 
         if data.get('long').get('country') == location['country'] and data.get('short').get('route'):
             location['street'] = data.get('short').get('route')
-            #location['city'] = data.get('short').get('locality')
-            #location['province'] = data.get('long').get('administrative_area_level_1')
-            location['latitude'] = data.get('location').get('lat')
-            location['longitude'] = data.get('location').get('lng')
+            location['location'] = dict(latitude=data.get('location').get('lat'), longitude=data.get('location').get('lng'))
         else:
             raise serializers.ValidationError('Validation Error: Could not validate route')
 
@@ -177,7 +174,7 @@ class LocationService(object):
 
         routingApi = herepy.RoutingApi(os.getenv("HERE_KEY"))
 
-        response = routingApi.truck_route([ori.get('latitude'), ori.get('longitude')], [dest.get('latitude'), dest.get('longitude')], [herepy.RouteMode.truck, herepy.RouteMode.fastest]).as_dict()
+        response = routingApi.truck_route(ori.coords[::-1], dest.coords[::-1], [herepy.RouteMode.truck, herepy.RouteMode.fastest]).as_dict()
         distance = response.get('response').get('route')[0].get('summary').get('distance') / 1000
 
         if distance < 51:

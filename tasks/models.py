@@ -1,6 +1,8 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from utils.models import Package, Status, State, Client, Provider, Driver
+from django.contrib.gis.db import models
+from django.contrib.gis.geos import Point
 
 
 class Order(models.Model):
@@ -24,21 +26,25 @@ class Order(models.Model):
     def __str__(self):
         """A string representation of the model."""
         return self.title +' '+self.request_id
+        
+    def save(self, *args, **kwargs):
 
+        self.title = 'TEST DE MODEL SAVE'
+
+        super(Order, self).save(*args, **kwargs)
 
 class Origin(models.Model):
 
     order = models.OneToOneField(Order, related_name='origins', on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     street = models.CharField(max_length=50, null=True, blank=True)
-    house_num = models.IntegerField(null=True, blank=True)
+    house_num = models.CharField(max_length=50)
     ap_unit = models.CharField(max_length=50, null=True, blank=True)
     suburb = models.CharField(max_length=50, null=True, blank=True)
-    city = models.CharField(max_length=50, null=True)
-    province = models.CharField(max_length=50, null=True)
-    country = models.CharField(max_length=50, blank=True)
-    latitude = models.CharField(max_length=50, blank=True)
-    longitude = models.CharField(max_length=50, blank=True)
+    city = models.CharField(max_length=50)
+    province = models.CharField(max_length=50)
+    country = models.CharField(max_length=50)
+    location = models.PointField(geography=True, default=Point(0.0, 0.0))
     pos_code = models.IntegerField(null=True, blank=True)
 
     def __int__(self):
@@ -50,15 +56,14 @@ class Destination(models.Model):
 
     order = models.OneToOneField(Order, related_name='destinations', on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
-    street = models.CharField(max_length=50, null=True, blank=True)
-    house_num = models.IntegerField(null=True, blank=True)
+    street = models.CharField(max_length=50)
+    house_num = models.CharField(max_length=50)
     ap_unit = models.CharField(max_length=50, null=True, blank=True)
     suburb = models.CharField(max_length=50, null=True, blank=True)
     city = models.CharField(max_length=50, null=True)
-    province = models.CharField(max_length=50, null=True)
-    country = models.CharField(max_length=50, blank=True)
-    latitude = models.CharField(max_length=50, blank=True)
-    longitude = models.CharField(max_length=50, blank=True)
+    province = models.CharField(max_length=50)
+    country = models.CharField(max_length=50)
+    location = models.PointField(geography=True, default=Point(0.0, 0.0))
     pos_code = models.IntegerField(null=True, blank=True)
 
     def __int__(self):

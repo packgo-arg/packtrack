@@ -6,6 +6,7 @@ import datetime as dt
 import time
 from .services import DataService, ValidateService, LocationService, CalcService
 from rest_framework.response import Response
+from drf_extra_fields.geo_fields import PointField
 
 class ReturnSerializer(serializers.ModelSerializer):
 
@@ -70,6 +71,8 @@ class OriginSerializer(serializers.ModelSerializer):
 
     """Process Origin information"""
 
+    location = PointField()
+
     class Meta:
         model = Origin
         fields = (
@@ -81,9 +84,8 @@ class OriginSerializer(serializers.ModelSerializer):
             'city',
             'province',
             'country',
-            'latitude',
-            'longitude',
-            'pos_code'
+            'location',
+            'pos_code',
         )
 
     def to_internal_value(self, value):
@@ -145,8 +147,9 @@ class OriginSerializer(serializers.ModelSerializer):
 
 class DestinationSerializer(serializers.ModelSerializer):
 
-    """Process Destination information
-    """
+    """Process Destination information"""
+
+    location = PointField()
 
     class Meta:
         model = Destination
@@ -159,9 +162,8 @@ class DestinationSerializer(serializers.ModelSerializer):
             'city',
             'province',
             'country',
-            'latitude',
-            'longitude',
-            'pos_code'
+            'location',
+            'pos_code',
         )
 
     def to_internal_value(self, value):
@@ -373,7 +375,7 @@ class OrderSerializer(serializers.ModelSerializer):
         start_time = time.time()
         print('--- INICIO ORDER_VALIDATE ---')
         try:
-            value['duration'], distance = LocationService.getDeliveryTime(value['origins'], value['destinations'])
+            value['duration'], distance = LocationService.getDeliveryTime(value['origins']['location'], value['destinations']['location'])
         except:
             value['duration'] = 99
             raise serializers.ValidationError('Could not parse coordinates')

@@ -6,16 +6,24 @@ from import_export.admin import ImportExportModelAdmin, ImportExportActionModelA
 from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from .models import *
 from utils.models import *
+from django.contrib.gis.db import models
+from mapwidgets.widgets import GooglePointFieldInlineWidget
 
 
 class OriginItemInline(admin.StackedInline):
     model = Origin
     extra = 1
+    formfield_overrides = {
+        models.PointField: {"widget": GooglePointFieldInlineWidget}
+    }
 
 
 class DestinationItemInline(admin.StackedInline):
     model = Destination
     extra = 1
+    formfield_overrides = {
+        models.PointField: {"widget": GooglePointFieldInlineWidget}
+    }
 
 
 class PackageItemInline(admin.TabularInline):
