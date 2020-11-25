@@ -1,4 +1,5 @@
-from django.contrib import admin
+from django.contrib.gis import admin
+from leaflet.admin import LeafletGeoAdmin
 from .models import Client, Provider, Package, Status, Driver, State
 
 
@@ -47,4 +48,4 @@ admin.site.register(Client, ClientAdmin)
 admin.site.register(Provider, ProvAdmin)
 admin.site.register(Package, PkgAdmin)
 admin.site.register(Status, StatusAdmin)
-admin.site.register(State, StateAdmin)
+admin.site.register(State, LeafletGeoAdmin)

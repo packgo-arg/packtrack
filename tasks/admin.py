@@ -8,22 +8,17 @@ from .models import *
 from utils.models import *
 from django.contrib.gis.db import models
 from mapwidgets.widgets import GooglePointFieldInlineWidget
+from leaflet.admin import LeafletGeoAdminMixin
 
 
-class OriginItemInline(admin.StackedInline):
+class OriginItemInline(LeafletGeoAdminMixin, admin.StackedInline):
     model = Origin
     extra = 1
-    formfield_overrides = {
-        models.PointField: {"widget": GooglePointFieldInlineWidget}
-    }
 
 
-class DestinationItemInline(admin.StackedInline):
+class DestinationItemInline(LeafletGeoAdminMixin, admin.StackedInline):
     model = Destination
     extra = 1
-    formfield_overrides = {
-        models.PointField: {"widget": GooglePointFieldInlineWidget}
-    }
 
 
 class PackageItemInline(admin.TabularInline):

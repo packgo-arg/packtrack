@@ -1,8 +1,12 @@
 from django.db import models
+from django.contrib.gis.db import models
+from django.contrib.gis.geos import Point
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.core.validators import MaxValueValidator, MinValueValidator
 from tasks.services import LocationService
+import uuid
 
 
 # Create your models here.
@@ -48,8 +52,9 @@ class State(models.Model):
     city = models.CharField(max_length=50, unique=True, null=True)
     province = models.CharField(max_length=50, null=True)
     country = models.CharField(max_length=50, null=True)
-    latitude = models.CharField(max_length=30, null=True, blank=True)
-    longitude = models.CharField(max_length=30, null=True, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    mpoly = models.MultiPolygonField(default='SRID=4326;MULTIPOLYGON (((0 0, 0 1, 1 1, 1 0, 0 0)))')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -70,6 +75,8 @@ class State(models.Model):
 
 class Provider(models.Model):
     # required fields
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    users = models.ManyToManyField(User)
     prov_name = models.CharField(max_length=20, unique=True)
     prov_code = models.CharField(max_length=2, unique=True)
     state_code = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
@@ -78,10 +85,19 @@ class Provider(models.Model):
     def __str__(self):
         """A string representation of the model."""
         return self.prov_name
+    
+    def get_packgo():
+        """Get packgo object
+        Returns:
+            object: Pack Go provider object
+        """
+        return Provider.objects.get(prov_name='Pack GO').id
 
 
 class Driver(models.Model):
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     driv_name = models.CharField(max_length=20, unique=True)
     vehicle_type = models.CharField(max_length=20)
     vehicle_brand = models.CharField(max_length=30, null=True, blank=True)
@@ -107,6 +123,7 @@ class Client(models.Model):
     (0, "Volume"), 
     (1, "Weight"), 
 )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     users = models.ManyToManyField(User)
     client_name = models.CharField(max_length=20, unique=True)
     client_code = models.CharField(max_length=2, unique=True)

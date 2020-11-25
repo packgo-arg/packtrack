@@ -1,12 +1,13 @@
-from django.db import models
+from django.db import models as dbmodels
 from django.core.validators import MaxValueValidator, MinValueValidator
 from utils.models import Package, Status, State, Client, Provider, Driver
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
+import uuid
 
 
 class Order(models.Model):
-
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     # required fields
     title = models.CharField(max_length=50)
     description = models.TextField(blank=True)
@@ -27,25 +28,27 @@ class Order(models.Model):
         """A string representation of the model."""
         return self.title +' '+self.request_id
         
-    def save(self, *args, **kwargs):
+    #def save(self, *args, **kwargs):
 
-        self.title = 'TEST DE MODEL SAVE'
+    #    self.title = 'TEST DE MODEL SAVE'
 
-        super(Order, self).save(*args, **kwargs)
+    #    super(Order, self).save(*args, **kwargs)
 
 class Origin(models.Model):
 
     order = models.OneToOneField(Order, related_name='origins', on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
-    street = models.CharField(max_length=50, null=True, blank=True)
-    house_num = models.CharField(max_length=50)
-    ap_unit = models.CharField(max_length=50, null=True, blank=True)
+    street = models.CharField(max_length=50)
+    house_num = models.CharField(max_length=10)
+    ap_unit = models.CharField(max_length=10, null=True, blank=True)
     suburb = models.CharField(max_length=50, null=True, blank=True)
     city = models.CharField(max_length=50)
     province = models.CharField(max_length=50)
     country = models.CharField(max_length=50)
     location = models.PointField(geography=True, default=Point(0.0, 0.0))
     pos_code = models.IntegerField(null=True, blank=True)
+    geo_data = models.JSONField(null=True, blank=True)
+    is_covered = models.BooleanField(default=False)
 
     def __int__(self):
         """A string representation of the model."""
@@ -57,7 +60,7 @@ class Destination(models.Model):
     order = models.OneToOneField(Order, related_name='destinations', on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     street = models.CharField(max_length=50)
-    house_num = models.CharField(max_length=50)
+    house_num = models.CharField(max_length=10)
     ap_unit = models.CharField(max_length=50, null=True, blank=True)
     suburb = models.CharField(max_length=50, null=True, blank=True)
     city = models.CharField(max_length=50, null=True)
@@ -65,6 +68,8 @@ class Destination(models.Model):
     country = models.CharField(max_length=50)
     location = models.PointField(geography=True, default=Point(0.0, 0.0))
     pos_code = models.IntegerField(null=True, blank=True)
+    geo_data = models.JSONField(null=True, blank=True)
+    is_covered = models.BooleanField(default=False)
 
     def __int__(self):
         """A string representation of the model."""
@@ -91,7 +96,7 @@ class OrderStatus(models.Model):
 
     order = models.ForeignKey(Order, related_name='ord_status', on_delete=models.CASCADE)
     status = models.ForeignKey(Status, on_delete=models.CASCADE, default=1)
-    provider = models.ForeignKey(Provider, on_delete=models.CASCADE, default=1)
+    provider = models.ForeignKey(Provider, on_delete=models.CASCADE, default=Provider.get_packgo())
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE, null=True, blank=True)
     location = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
     description = models.CharField(max_length=150, null=True, blank=True)

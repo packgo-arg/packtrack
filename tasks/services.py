@@ -56,11 +56,8 @@ class DataService(object):
 
         start_time = time.time()
 
-        if data.get('long').get('country') == location['country'] and data.get('short').get('route'):
-            location['street'] = data.get('short').get('route')
-            location['location'] = dict(latitude=data.get('location').get('lat'), longitude=data.get('location').get('lng'))
-        else:
-            raise serializers.ValidationError('Validation Error: Could not validate route')
+        location['street'] = data.get('short').get('route')
+        location['location'] = dict(latitude=data.get('location').get('lat'), longitude=data.get('location').get('lng'))
 
         print('--- Tiempo de ejecucion popData: {} segundos ---'.format((time.time() - start_time)))
         return location

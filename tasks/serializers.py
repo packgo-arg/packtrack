@@ -1,12 +1,13 @@
 from rest_framework import serializers
-from django.utils import timezone
-from .models import Order, Origin, Destination, OrderStatus, OrderPackage
-from utils.models import Status, State, Client, Package
-import datetime as dt
-import time
-from .services import DataService, ValidateService, LocationService, CalcService
 from rest_framework.response import Response
 from drf_extra_fields.geo_fields import PointField
+from django.utils import timezone
+from tasks.models import Order, Origin, Destination, OrderStatus, OrderPackage
+from tasks.services import DataService, ValidateService, LocationService, CalcService
+from utils.models import Status, State, Client, Package
+import datetime as dt
+import time, os
+import geocoder
 
 class ReturnSerializer(serializers.ModelSerializer):
 
@@ -86,6 +87,8 @@ class OriginSerializer(serializers.ModelSerializer):
             'country',
             'location',
             'pos_code',
+            'geo_data',
+            'is_covered',
         )
 
     def to_internal_value(self, value):
@@ -104,24 +107,23 @@ class OriginSerializer(serializers.ModelSerializer):
         Returns:
             json: Origin model serializer
         """
-
-        try:
-            req = LocationService.getLocal('localidades_censales', [dict(nombre=value['city'], provincia=value['province'])])
-            value['city'] = req.get('nombre', None)
-            value['province'] = req.get('provincia', None).get('nombre', None)
-            if 'suburb' in value.keys() and 'barrio' not in ValidateService.normalizeWord(value['suburb']):
-                value['suburb'] = 'Barrio ' + value['suburb']
-        except IndexError:
-            raise serializers.ValidationError('Could not validate Locality')
-
         if 'latitude' not in value.keys() or 'longitude' not in value.keys() or not value['latitude'] or not value['longitude']:
-            orAdd = ValidateService.listToAddr(value)
-            orData = LocationService.getCoord(orAdd)
-            value = DataService.popData(orData, value)
+            origin_address = ValidateService.listToAddr(value)
+            geo_data = geocoder.google(origin_address, key=os.getenv("GOOGLE_KEY"))
+            if geo_data.ok:
+                value['geo_data'] = geo_data.json
+                value['location'] = dict(latitude=geo_data.latlng[0], longitude=geo_data.latlng[1])
+            else:
+                raise serializers.ValidationError({'Error': 'Could not get coordinates from data', 'Geodata': value})
+        else:
+            value['location'] = dict(latitude=float(value['latitude']), longitude=float(value['longitude']))
+            geo_data = geocoder.google(value['location'].values(), key=os.getenv("GOOGLE_KEY"))
+            value['geo_data'] = geo_data.json
+            
         print('--- Tiempo de ejecucion Origin_to_internal: {} segundos ---'.format((time.time() - start_time)))
         return super().to_internal_value(value)
 
-    def validate_city(self, value):
+    def validate(self, value):
 
         """Validate if Pack GO provide services in the area requested.
         This is done consulting the db.
@@ -135,14 +137,15 @@ class OriginSerializer(serializers.ModelSerializer):
         """
 
         start_time = time.time()
-        print('--- INICIO ORIGIN_VALIDATE_CITY ---')
-        try:
-            State.objects.get(city__unaccent__iexact=ValidateService.normalizeWord(value))
-            print('--- Tiempo de ejecucion Origin_validate_city: {} segundos ---'.format((time.time() - start_time)))
-            return value
-        except:
+        print('--- INICIO ORIGIN_VALIDATE_LOCATION ---')
+        query = State.objects.filter(mpoly__intersects=value['location'])
+        if not query:
             print('--- Tiempo de ejecucion Origin_validate_city (fail): {} segundos ---'.format((time.time() - start_time)))
-            raise serializers.ValidationError('Origin address: Pack GO does not provide services in that location')
+            value['is_covered'] = False
+        else:
+            print('--- Tiempo de ejecucion Origin_validate_city: {} segundos ---'.format((time.time() - start_time)))
+            value['is_covered'] = True
+        return value
 
 
 class DestinationSerializer(serializers.ModelSerializer):
@@ -164,6 +167,8 @@ class DestinationSerializer(serializers.ModelSerializer):
             'country',
             'location',
             'pos_code',
+            'geo_data',
+            'is_covered',
         )
 
     def to_internal_value(self, value):
@@ -182,44 +187,45 @@ class DestinationSerializer(serializers.ModelSerializer):
             json: Destination model serializer
         """
 
-        try:
-            req = LocationService.getLocal('localidades_censales', [dict(nombre=value['city'], provincia=value['province'])])
-            value['city'] = req.get('nombre', None)
-            value['province'] = req.get('provincia', None).get('nombre', None)
-            if 'suburb' in value.keys() and 'barrio' not in ValidateService.normalizeWord(value['suburb']):
-                value['suburb'] = 'Barrio ' + value['suburb']
-        except IndexError:
-            raise serializers.ValidationError('Could not validate locality')
-
         if 'latitude' not in value.keys() or 'longitude' not in value.keys() or not value['latitude'] or not value['longitude']:
-            destAdd = ValidateService.listToAddr(value)
-            destData = LocationService.getCoord(destAdd)
-            value = DataService.popData(destData, value)
-        print('--- Tiempo de ejecucion Dest_to_internal: {} segundos ---'.format((time.time() - start_time)))
+            destination_address = ValidateService.listToAddr(value)
+            geo_data = geocoder.google(destination_address, key=os.getenv("GOOGLE_KEY"))
+            if geo_data.ok:
+                value['geo_data'] = geo_data.json
+                value['location'] = dict(latitude=geo_data.latlng[0], longitude=geo_data.latlng[1])
+            else:
+                raise serializers.ValidationError({'Error': 'Could not get coordinates from data', 'Geodata': value})
+        else:
+            value['location'] = dict(latitude=float(value['latitude']), longitude=float(value['longitude']))
+            geo_data = geocoder.google(value['location'].values(), key=os.getenv("GOOGLE_KEY"))
+            value['geo_data'] = geo_data.json
+            
+        print('--- Tiempo de ejecucion destination_to_internal: {} segundos ---'.format((time.time() - start_time)))
         return super().to_internal_value(value)
 
-    def validate_city(self, value):
+    def validate(self, value):
 
         """Validate if Pack GO provide services in the area requested.
         This is done consulting the db.
 
         Raises:
-            serializers.ValidationError: Destination address: Pack GO does
-            not provide services in that location
+            serializers.ValidationError: 'Destination address: Pack GO
+            does not provide services in that location'
 
         Returns:
-            string: location
+            string : Destination city
         """
 
         start_time = time.time()
-        print('--- INICIO DEST_VALIDATE_CITY ---')
-        try:
-            State.objects.get(city__unaccent__iexact=ValidateService.normalizeWord(value))
-            print('--- Tiempo de ejecucion Dest_validate_city: {} segundos ---'.format((time.time() - start_time)))
-            return value
-        except:
-            print('--- Tiempo de ejecucion Dest_validate_city (fail): {} segundos ---'.format((time.time() - start_time)))
-            raise serializers.ValidationError('Destination address: Pack GO does not provide services in that location')
+        print('--- INICIO Destination_VALIDATE_LOCATION ---')
+        query = State.objects.filter(mpoly__intersects=value['location'])
+        if not query:
+            print('--- Tiempo de ejecucion Destination_validate_city (fail): {} segundos ---'.format((time.time() - start_time)))
+            value['is_covered'] = False
+        else:
+            print('--- Tiempo de ejecucion Destination_validate_city: {} segundos ---'.format((time.time() - start_time)))
+            value['is_covered'] = True
+        return value
 
 
 class PackageSerializer(serializers.ModelSerializer):
