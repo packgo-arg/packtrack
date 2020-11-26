@@ -96,7 +96,7 @@ class OrderStatus(models.Model):
 
     order = models.ForeignKey(Order, related_name='ord_status', on_delete=models.CASCADE)
     status = models.ForeignKey(Status, on_delete=models.CASCADE, default=1)
-    provider = models.ForeignKey(Provider, on_delete=models.CASCADE, default=Provider.get_packgo())
+    provider = models.ForeignKey(Provider, on_delete=models.CASCADE, default=Provider.objects.get(prov_name='Pack GO').id)
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE, null=True, blank=True)
     location = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
     description = models.CharField(max_length=150, null=True, blank=True)
