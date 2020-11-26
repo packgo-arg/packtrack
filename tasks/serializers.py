@@ -117,7 +117,7 @@ class OriginSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({'Error': 'Could not get coordinates from data', 'Geodata': value})
         else:
             value['location'] = dict(latitude=float(value['latitude']), longitude=float(value['longitude']))
-            geo_data = geocoder.google(value['location'].values(), key=os.getenv("GOOGLE_KEY"))
+            geo_data = geocoder.google(list(value['location'].values()), key=os.getenv("GOOGLE_KEY"), method='reverse')
             value['geo_data'] = geo_data.json
             
         print('--- Tiempo de ejecucion Origin_to_internal: {} segundos ---'.format((time.time() - start_time)))
@@ -197,7 +197,7 @@ class DestinationSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({'Error': 'Could not get coordinates from data', 'Geodata': value})
         else:
             value['location'] = dict(latitude=float(value['latitude']), longitude=float(value['longitude']))
-            geo_data = geocoder.google(value['location'].values(), key=os.getenv("GOOGLE_KEY"))
+            geo_data = geocoder.google(list(value['location'].values()), key=os.getenv("GOOGLE_KEY"), method='reverse')
             value['geo_data'] = geo_data.json
             
         print('--- Tiempo de ejecucion destination_to_internal: {} segundos ---'.format((time.time() - start_time)))
