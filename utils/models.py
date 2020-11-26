@@ -1,22 +1,42 @@
 from django.db import models
+from django.contrib.gis.db import models
+from django.contrib.gis.geos import Point
+from django.conf import settings
+from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.core.validators import MaxValueValidator, MinValueValidator
-from tasks.lib.pg_library import getCoord
-import requests
-import os
+from tasks.services import LocationService
+import uuid
+
 
 # Create your models here.
 
 class Package(models.Model):
+    
+    PACKAGE_FIXED = ( 
+    (0, "Fixed"), 
+    (1, "Variable"), 
+)
     pkg_name = models.CharField(max_length=20, unique=True)
     pkg_code = models.CharField(max_length=2, unique=True)
     pkg_description = models.CharField(max_length=100, null=True, blank=True)
-    pkg_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    pkg_fixed = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(1)])
+    height = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    width = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    length = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    volume = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    weight = models.FloatField(default=0, validators=[MinValueValidator(0)])
     pkg_coef = models.FloatField(default=0, validators=[MinValueValidator(0)])
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.pkg_name
+    
+    def save(self, *args, **kwargs):
+        if (self.height != 0) and (self.width != 0) and (self.length != 0):
+            self.volume = self.height * self.width * self.length
+
+        super(State, self).save(*args, **kwargs)
 
 
 class Status(models.Model):
@@ -32,8 +52,9 @@ class State(models.Model):
     city = models.CharField(max_length=50, unique=True, null=True)
     province = models.CharField(max_length=50, null=True)
     country = models.CharField(max_length=50, null=True)
-    latitude = models.CharField(max_length=30, null=True, blank=True)
-    longitude = models.CharField(max_length=30, null=True, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    mpoly = models.MultiPolygonField(default='SRID=4326;MULTIPOLYGON (((0 0, 0 1, 1 1, 1 0, 0 0)))')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -41,7 +62,7 @@ class State(models.Model):
 
     def save(self, *args, **kwargs):
 
-        req = getCoord(self.city, self.province)
+        req = LocationService.getLocal('localidades_censales', [dict(nombre=self.city, provincia=self.province)])
 
         self.city = req.get('nombre')
         self.province = req.get('provincia').get('nombre')
@@ -54,6 +75,8 @@ class State(models.Model):
 
 class Provider(models.Model):
     # required fields
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    users = models.ManyToManyField(User)
     prov_name = models.CharField(max_length=20, unique=True)
     prov_code = models.CharField(max_length=2, unique=True)
     state_code = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
@@ -62,9 +85,19 @@ class Provider(models.Model):
     def __str__(self):
         """A string representation of the model."""
         return self.prov_name
+    
+    def get_packgo():
+        """Get packgo object
+        Returns:
+            object: Pack Go provider object
+        """
+        return Provider.objects.get(prov_name='Pack GO').id
+
 
 class Driver(models.Model):
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     driv_name = models.CharField(max_length=20, unique=True)
     vehicle_type = models.CharField(max_length=20)
     vehicle_brand = models.CharField(max_length=30, null=True, blank=True)
@@ -82,11 +115,23 @@ class Driver(models.Model):
 
 class Client(models.Model):
     # required fields
+    PRICE_CALC = ( 
+    (0, "Variable"), 
+    (1, "Fixed"), 
+)
+    PACKAGE_CAPACITY = ( 
+    (0, "Volume"), 
+    (1, "Weight"), 
+)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    users = models.ManyToManyField(User)
     client_name = models.CharField(max_length=20, unique=True)
     client_code = models.CharField(max_length=2, unique=True)
     state_code = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
-    price_disc = models.FloatField(default=0, validators=[MinValueValidator(0), MaxValueValidator(1)])
-    cust_rule = models.CharField(max_length=20, null=True, blank=True)
+    price_calc = models.PositiveIntegerField(default=0, choices=PRICE_CALC)
+    unit_type = models.PositiveIntegerField(default=0, choices=PACKAGE_CAPACITY)
+    base_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    unit_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

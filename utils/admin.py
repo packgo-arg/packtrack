@@ -1,8 +1,7 @@
-from django.contrib import admin
-from tasks.lib.pg_library import jsonForApi
-import requests
-import os
-from .models import *
+from django.contrib.gis import admin
+from leaflet.admin import LeafletGeoAdmin
+from .models import Client, Provider, Package, Status, Driver, State
+
 
 class DriverInline(admin.TabularInline):
     model = Driver
@@ -12,10 +11,12 @@ class DriverInline(admin.TabularInline):
     def get_status(self, obj):
         return obj.get_driver_display()
 
+
 class ClientAdmin(admin.ModelAdmin):
 
     readonly_fields = ['id', 'created_at']
     list_display = ['client_name','created_at']
+
 
 class ProvAdmin(admin.ModelAdmin):
 
@@ -24,15 +25,18 @@ class ProvAdmin(admin.ModelAdmin):
 
     inlines = (DriverInline,)
 
+
 class PkgAdmin(admin.ModelAdmin):
 
     readonly_fields = ['id', 'created_at']
     list_display = ['pkg_name','id','created_at']
 
+
 class StatusAdmin(admin.ModelAdmin):
 
     readonly_fields = ['id', 'created_at']
     list_display = ['status_name','id','status_desc','created_at']
+
 
 class StateAdmin(admin.ModelAdmin):
 
@@ -44,4 +48,4 @@ admin.site.register(Client, ClientAdmin)
 admin.site.register(Provider, ProvAdmin)
 admin.site.register(Package, PkgAdmin)
 admin.site.register(Status, StatusAdmin)
-admin.site.register(State, StateAdmin)
+admin.site.register(State, LeafletGeoAdmin)
