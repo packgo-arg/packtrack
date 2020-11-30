@@ -42,6 +42,7 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
     'jet',
+    'jet_django',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -115,6 +116,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'api.wsgi.application'
+
+JET_PROJECT = 'packtrack'
+JET_TOKEN = '337fd662-4621-4e3e-b155-1f44d6a5850e'
 
 # POSTGRESQL
 

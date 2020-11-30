@@ -26,7 +26,7 @@ admin.autodiscover()
 urlpatterns = [
     # Admin site
     path('jet/', include('jet.urls', 'jet')),  # Django JET URLS
-    #path('jet/dashboard/', include('jet.dashboard.urls', 'jet-dashboard')),  # Django JET dashboard URLS
+    path('jet_api/', include('jet_django.urls')),
     path('admin/', admin.site.urls),
     # Token handlers
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
