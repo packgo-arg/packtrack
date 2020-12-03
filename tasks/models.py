@@ -3,10 +3,13 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from utils.models import Package, Status, State, Client, Provider, Driver
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
+from django.utils.html import format_html
 import uuid
 
 
 class Order(models.Model):
+
+    STATUS_CHOICE=()
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     # required fields
     title = models.CharField(max_length=50)
@@ -18,22 +21,51 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
-
     delay = models.IntegerField(null=True, blank=True)
     duration = models.PositiveIntegerField(null=True, blank=True)
+
+    last_status = models.ForeignKey(Status, on_delete=models.CASCADE, default=1)
+    last_provider = models.ForeignKey(Provider, on_delete=models.CASCADE, default='4fd1d932-f86a-456b-9f39-f9919ad22040')
+    last_driver = models.ForeignKey(Driver, on_delete=models.CASCADE, null=True, blank=True)
+    last_location = models.ForeignKey(State, on_delete=models.CASCADE, null=True, blank=True)
+    last_description = models.CharField(max_length=150, null=True, blank=True)
+    
     accidental_delivery_duration = models.PositiveIntegerField(null=True, blank=True)
     ord_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
 
     def __str__(self):
         """A string representation of the model."""
         return self.title +' '+self.request_id
+
+    def status(self):
+        status = self.last_status.id
+        if 1 <= status <= 5:
+            color = '#2a00fc'
+        elif 6 <= status <= 7:
+            color = '#fc0000'
+        elif status == 8:
+            color = '#00c407'
+        return format_html(
+            '<span style="color: {};"><strong>{}</strong></span>',
+            color,
+            self.last_status
+        )
+
+    def update_status_record(self):
+
+        OrderStatus.objects.create(
+            order=self,
+            status=self.last_status,
+            provider=self.last_provider,
+            driver=self.last_driver,
+            location=self.last_location,
+            description=self.last_description
+        )
         
-    #def save(self, *args, **kwargs):
-
-    #    self.title = 'TEST DE MODEL SAVE'
-
-    #    super(Order, self).save(*args, **kwargs)
-
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.update_status_record()
+         
 class Origin(models.Model):
 
     order = models.OneToOneField(Order, related_name='origins', on_delete=models.CASCADE)
@@ -52,7 +84,7 @@ class Origin(models.Model):
 
     def __int__(self):
         """A string representation of the model."""
-        return self.id
+        return None
 
 
 class Destination(models.Model):
@@ -73,7 +105,7 @@ class Destination(models.Model):
 
     def __int__(self):
         """A string representation of the model."""
-        return self.id
+        return None
 
 
 class OrderPackage(models.Model):
@@ -98,7 +130,7 @@ class OrderStatus(models.Model):
     status = models.ForeignKey(Status, on_delete=models.CASCADE, default=1)
     provider = models.ForeignKey(Provider, on_delete=models.CASCADE, default='4fd1d932-f86a-456b-9f39-f9919ad22040')
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE, null=True, blank=True)
-    location = models.ForeignKey(State, on_delete=models.CASCADE, null=True)
+    location = models.ForeignKey(State, on_delete=models.CASCADE, null=True, blank=True)
     description = models.CharField(max_length=150, null=True, blank=True)
     st_update = models.DateTimeField(auto_now_add=True)
 
