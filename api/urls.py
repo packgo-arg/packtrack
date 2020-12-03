@@ -25,8 +25,7 @@ admin.autodiscover()
 
 urlpatterns = [
     # Admin site
-    path('jet/', include('jet.urls', 'jet')),  # Django JET URLS
-    path('jet_api/', include('jet_django.urls')),
+    path(r'admin/', include('massadmin.urls')),
     path('admin/', admin.site.urls),
     # Token handlers
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -35,5 +34,7 @@ urlpatterns = [
     path('core/', include('core.urls')),
     path('api/tasks/', include('tasks.urls')),
     #landing
-    path('', views.index)
+    path('', views.index),
+    # Advanced Filters
+    path('advanced_filters/', include('advanced_filters.urls')),
 ]
