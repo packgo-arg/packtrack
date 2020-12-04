@@ -54,7 +54,6 @@ class OrderAdmin(admin.ModelAdmin):
                  )
                  
     readonly_fields = ['id', 'created_at']
-    print([f.name for f in model._meta.fields if f not in ['last_status', 'last_provider', 'last_driver', 'last_location', 'last_description']])
     massadmin_exclude = [f.name for f in model._meta.fields if f.name not in ('last_status', 'last_provider', 'last_driver', 'last_location', 'last_description')]
     # list of fields to display in django admin
     list_display = ('title', 'client', 'created_at', 'start_time', 'end_time', 'status')
