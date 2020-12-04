@@ -385,12 +385,21 @@ class OrderSerializer(serializers.ModelSerializer):
         except:
             value['duration'] = 99
             raise serializers.ValidationError('Could not parse coordinates')
-        if timezone.localtime().time() < dt.time(15):
-            value['start_time'] = timezone.now().replace(hour=18, minute=0, second=0, microsecond=0)
-        else:
-            value['start_time'] = timezone.now().replace(hour=11, minute=0, second=0, microsecond=0) + dt.timedelta(days=1)
 
-        value['end_time'] = value['start_time'] + dt.timedelta(hours=int(value['duration']))
+        if bool('start_time' in value.keys()) != bool('end_time' in value.keys()):
+            raise serializers.ValidationError({"time_fields": "Must enter both start and end time"})
+        
+        if 'start_time' not in value.keys():
+            if timezone.localtime().time() < dt.time(15):
+                value['start_time'] = timezone.now().replace(hour=18, minute=0, second=0, microsecond=0)
+            else:
+                value['start_time'] = timezone.now().replace(hour=11, minute=0, second=0, microsecond=0) + dt.timedelta(days=1)
+
+        if 'end_time' not in value.keys():
+            value['end_time'] = value['start_time'] + dt.timedelta(hours=int(value['duration']))
+        else:
+            if value['end_time'] < value['start_time']:
+                raise serializers.ValidationError({"end_time": "End time cannot be before Start time"})
 
         value['ord_price'] = 0
 
@@ -414,7 +423,7 @@ class OrderSerializer(serializers.ModelSerializer):
         order = Order.objects.create(**validated_data)
         Origin.objects.create(order=order, **origin_data)
         Destination.objects.create(order=order, **dest_data)
-        OrderStatus.objects.create(order=order, location=State.objects.get(city__unaccent__iexact=ValidateService.normalizeWord(origin_data['city'])))
+ #       OrderStatus.objects.create(order=order, location=State.objects.get(city__unaccent__iexact=ValidateService.normalizeWord(origin_data['city'])))
         for pkg in pkg_data:
             OrderPackage.objects.create(order=order, **pkg)
         return order
