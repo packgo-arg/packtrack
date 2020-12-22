@@ -33,8 +33,6 @@ urlpatterns = [
     # API urls
     path('core/', include('core.urls')),
     path('api/tasks/', include('tasks.urls')),
-    #landing
-    path('', views.index),
     # Advanced Filters
     path('advanced_filters/', include('advanced_filters.urls')),
 ]

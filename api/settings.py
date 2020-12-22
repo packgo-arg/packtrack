@@ -41,8 +41,6 @@ ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
-    #'material.admin',
-    #'material.admin.default',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -55,8 +53,6 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'tasks.apps.TasksConfig',
     'utils.apps.UtilsConfig',
-    'landing.apps.LandingConfig',
-    'import_export',
     'django.contrib.gis',
     'rest_framework_gis',
     'leaflet',
