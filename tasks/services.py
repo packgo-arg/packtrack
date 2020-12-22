@@ -10,8 +10,19 @@ from rest_framework import serializers
 
 class DataService(object):
 
+    """ Class for declaring Service related functions.
+
+    """
+
     @staticmethod
     def getOrigin():
+
+        """Get ORIGIN data if no origin was specified in the post request
+
+        Returns:
+            json: returns fixed origin values.
+        """
+
         start_time = time.time()
         origin = {
             "name": "Deposito PackGo",
@@ -32,16 +43,21 @@ class DataService(object):
     @staticmethod
     def popData(data, location):
 
+        """ Populate Location Dictionary with data extracted from Google Maps API.
+        This Location can be for both Origin and Destination.
+
+        Raises:
+            serializers.ValidationError: Validates that the returned country Geocoding values from Google API
+            are the same as the one sent by the client.
+
+        Returns:
+            dictionary: location data.
+        """
+
         start_time = time.time()
 
-        if data.get('long').get('country') == location['country'] and data.get('short').get('route'):
-            location['street'] = data.get('short').get('route')
-            location['city'] = data.get('short').get('locality')
-            location['province'] = data.get('long').get('administrative_area_level_1')
-            location['latitude'] = data.get('location').get('lat')
-            location['longitude'] = data.get('location').get('lng')
-        else:
-            raise serializers.ValidationError('Validation Error: Could not validate route')
+        location['street'] = data.get('short').get('route')
+        location['location'] = dict(latitude=data.get('location').get('lat'), longitude=data.get('location').get('lng'))
 
         print('--- Tiempo de ejecucion popData: {} segundos ---'.format((time.time() - start_time)))
         return location
@@ -49,12 +65,30 @@ class DataService(object):
 
 class ValidateService(object):
 
+    """ Class for declaring Validation functions.
+
+    """
+
     @staticmethod
     def normalizeWord(word):
+
+        """ Return word converted to lowercase and stripped from accents.
+
+        Returns:
+            string: string normalized with lowercase and without accents.
+        """
+
         return unicodedata.normalize('NFKD', word.lower()).encode('ASCII', 'ignore').decode('utf-8')
 
     @staticmethod
     def listToAddr(location):
+
+        """ Returns an address string constructed from a Location dictionary.
+
+        Returns:
+            string: address string constructed from a Location dictionary.
+        """
+
         start_time = time.time()
         wk = [key for key in location.keys() if key in ('street', 'house_num', 'suburb', 'city', 'province', 'country', 'pos_code')]
         address = re.sub(',', '', ', '.join(value for value in dict(zip(wk, [location[k] for k in wk])).values() if value), 1)
@@ -64,8 +98,19 @@ class ValidateService(object):
 
 class LocationService(object):
 
+    """ Class for declaring functions related to location services and APIs.
+
+    """
+
     @staticmethod
     def getLocal(endpoint, param):
+
+        """ Validate Locality or City using https://datosgobar.github.io/georef-ar-api/
+
+        Returns:
+            json: response with city normalization from https://datosgobar.github.io/georef-ar-api/ 
+        """
+
         start_time = time.time()
         d = {}
         d[endpoint] = param
@@ -82,6 +127,17 @@ class LocationService(object):
 
     @staticmethod
     def getCoord(address):
+
+        """ Get coordinates for location using Google Maps Geolocation API.
+
+        Raises:
+            serializers.ValidationError: Google Maps API could not find pair of
+            coordinates suitable for address passed as input.
+
+        Returns:
+            dictionary: Geocoding information.
+        """
+
         start_time = time.time()
         gmaps = GoogleMaps(os.getenv("GOOGLE_KEY"))
         geocode_result = gmaps.geocode(address)
@@ -104,11 +160,18 @@ class LocationService(object):
 
     @staticmethod
     def getDeliveryTime(ori, dest):
+
+        """ Get routing time based on coordinates for origin and destination using HERE routing API.
+
+        Returns:
+            string: Returns delivery time and distance calculated with Here API.
+        """
+
         start_time = time.time()
 
         routingApi = herepy.RoutingApi(os.getenv("HERE_KEY"))
 
-        response = routingApi.truck_route([ori.get('latitude'), ori.get('longitude')], [dest.get('latitude'), dest.get('longitude')], [herepy.RouteMode.truck, herepy.RouteMode.fastest]).as_dict()
+        response = routingApi.truck_route(ori.coords[::-1], dest.coords[::-1], [herepy.RouteMode.truck, herepy.RouteMode.fastest]).as_dict()
         distance = response.get('response').get('route')[0].get('summary').get('distance') / 1000
 
         if distance < 51:
@@ -128,7 +191,13 @@ class LocationService(object):
 class CalcService(object):
 
     @staticmethod
-    def calcPrice(km, disc, package, pkgType):
+    def calcOrderPrice(km, package, pkgType):
+
+        """ Calculate Delivery price
+
+        Returns:
+            int: Total price calculation based on size and quantity of packages in order
+        """
 
         start_time = time.time()
 
@@ -139,6 +208,7 @@ class CalcService(object):
         else:
             mult = int(r[km // 25])**pkgType.pkg_coef
 
+        ''' DEPRECATED
         if 10 < package.get('quantity') < 20:
             disc += 0.1
         elif 20 < package.get('quantity') < 30:
@@ -149,7 +219,8 @@ class CalcService(object):
             disc += 0.4
 
         base = pkgType.pkg_price - (pkgType.pkg_price * disc)
-        total = (base * mult) * package.get('quantity')
+        '''
+        total = package.get('pack_price') * mult
 
         print('--- Tiempo de ejecucion calcPrice: {} segundos ---'.format((time.time() - start_time)))
 

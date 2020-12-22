@@ -15,7 +15,6 @@ import sys
 import dj_database_url
 import dotenv
 from datetime import timedelta
-import django_heroku
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -24,7 +23,7 @@ dotenv_file = os.path.join(BASE_DIR, ".env")
 ENV = False
 if os.path.isfile(dotenv_file):
     ENV = True
-    dotenv.load_dotenv(dotenv_file)
+    dotenv.load_dotenv(dotenv_file, override=True)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
@@ -34,15 +33,16 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
+DEBUG = bool(os.environ.get("DEBUG", default=0))
 
-DEBUG = os.getenv("DEBUG")
-
-ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'packgo.com.ar', '172.17.0.1']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
 INSTALLED_APPS = [
-    'jet',
+    'whitenoise.runserver_nostatic',
+    #'material.admin',
+    #'material.admin.default',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,6 +56,12 @@ INSTALLED_APPS = [
     'tasks.apps.TasksConfig',
     'utils.apps.UtilsConfig',
     'landing.apps.LandingConfig',
+    'import_export',
+    'django.contrib.gis',
+    'rest_framework_gis',
+    'leaflet',
+    'advanced_filters',
+    'massadmin',
 ]
 
 MIDDLEWARE = [
@@ -112,12 +118,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'api.wsgi.application'
 
+JET_PROJECT = 'packtrack'
+JET_TOKEN = '337fd662-4621-4e3e-b155-1f44d6a5850e'
 
 # POSTGRESQL
 
-DATABASES = {}
-DATABASES['default'] = dj_database_url.config(conn_max_age=600)
+#DATABASES = {}
+#DATABASES['default'] = dj_database_url.config(conn_max_age=600)
 
+DATABASES = {
+    "default": {
+        "ENGINE": os.environ.get("SQL_ENGINE", "django.db.backends.sqlite3"),
+        "NAME": os.environ.get("SQL_DATABASE", os.path.join(BASE_DIR, "db.sqlite3")),
+        "USER": os.environ.get("SQL_USER", "user"),
+        "PASSWORD": os.environ.get("SQL_PASSWORD", "password"),
+        "HOST": os.environ.get("SQL_HOST", "localhost"),
+        "PORT": os.environ.get("SQL_PORT", "5432"),
+    }
+}
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 
@@ -136,6 +154,35 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+MAP_WIDGETS = {
+    "GooglePointFieldWidget": (
+        ("zoom", 15),
+        ("mapCenterLocationName", 'Argentina'),
+    ),
+    "GOOGLE_MAP_API_KEY": os.getenv("GOOGLE_KEY")
+}
+
+MATERIAL_ADMIN_SITE = {
+    'HEADER':  'PAGO GO',  # Admin site header
+    'TITLE':  'PACK GO ADMIN',  # Admin site title
+    #'FAVICON':  'path/to/favicon',  # Admin site favicon (path to static should be specified)
+    'MAIN_BG_COLOR':  '#22326E',  # Admin site main color, css color should be specified
+    'MAIN_HOVER_COLOR':  '#101630',  # Admin site main hover color, css color should be specified
+    #'PROFILE_PICTURE':  'path/to/image',  # Admin site profile picture (path to static should be specified)
+    #'PROFILE_BG':  'path/to/image',  # Admin site profile background (path to static should be specified)
+    #'LOGIN_LOGO':  'path/to/image',  # Admin site logo on login page (path to static should be specified)
+    #'LOGOUT_BG':  'path/to/image',  # Admin site background on login/logout pages (path to static should be specified)
+    #'SHOW_THEMES':  True,  #  Show default admin themes button
+    'TRAY_REVERSE': True,  # Hide object-tools and additional-submit-line by default
+    'NAVBAR_REVERSE': True,  # Hide side navbar by default
+    'SHOW_COUNTS': True, # Show instances counts for each model
+    'APP_ICONS': {  # Set icons for applications(lowercase), including 3rd party apps, {'application_name': 'material_icon_name', ...}
+        'sites': 'send',
+    },
+    'MODEL_ICONS': {  # Set icons for models(lowercase), including 3rd party models, {'model_name': 'material_icon_name', ...}
+        'site': 'contact_mail',
+    }
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
@@ -152,7 +199,7 @@ USE_TZ = True
 
 # Sessions
 
-SESSION_COOKIE_AGE = 300
+SESSION_COOKIE_AGE = 1800
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 
@@ -160,13 +207,34 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
+#STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'api.storage.WhiteNoiseStaticFilesStorage'
+STATIC_URL = '/staticfiles/'
+STATIC_ROOT = os.path.join(PROJECT_ROOT, 'staticfiles')
 sys.path.append(os.path.join(PROJECT_ROOT, 'tasks/lib'))
 
 JET_DEFAULT_THEME = 'default'
 JET_SIDE_MENU_COMPACT = True
+#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+#SECURE_SSL_REDIRECT = True
+#SESSION_COOKIE_SECURE = True
+#CSRF_COOKIE_SECURE = True
+LOG_LEVEL = bool(os.environ.get("LOG_LEVEL", default=0))
 
-if not ENV:
-    django_heroku.settings(locals())
+if LOG_LEVEL == 1:
+    
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                 'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
+            },
+        },
+    }

@@ -13,7 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
+from django.contrib.gis import admin
 from landing import views
 from django.urls import path, include
 from rest_framework_simplejwt.views import (
@@ -21,10 +21,11 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+admin.autodiscover()
+
 urlpatterns = [
     # Admin site
-    path('jet/', include('jet.urls', 'jet')),  # Django JET URLS
-    #path('jet/dashboard/', include('jet.dashboard.urls', 'jet-dashboard')),  # Django JET dashboard URLS
+    path(r'admin/', include('massadmin.urls')),
     path('admin/', admin.site.urls),
     # Token handlers
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -33,5 +34,7 @@ urlpatterns = [
     path('core/', include('core.urls')),
     path('api/tasks/', include('tasks.urls')),
     #landing
-    path('', views.index)
+    path('', views.index),
+    # Advanced Filters
+    path('advanced_filters/', include('advanced_filters.urls')),
 ]
