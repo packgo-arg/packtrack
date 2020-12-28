@@ -110,7 +110,7 @@ class StatusDetail(APIView):
         except:
             return Response({"Fail": "User logged not found in Client Database"}, status=status.HTTP_404_NOT_FOUND)
         try:
-            Order.objects.get(pk=request.data['order'], client=client_id)
+            #Order.objects.get(pk=request.data['order'], client=client_id)
             order_status = OrderStatus.objects.filter(order_id=request.data['order']).last()
             serializer = OrderStatusSerializer(order_status)
             return Response(serializer.data)

@@ -94,7 +94,7 @@ Dockerfile*
 docker-compose.yml
 *.xlsx
 *.csv
-/api/staticfiles/*/
+/api/staticfiles/
 !TABLAS.xlsx
 order.json
 *.geojson

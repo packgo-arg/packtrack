@@ -1,27 +1,27 @@
+from .models import Origin, Destination, OrderPackage, Order, OrderStatus
+from advanced_filters.admin import AdminAdvancedFiltersMixin
 from django.contrib.gis import admin
+from django.contrib.gis.db import models
 from django.http import HttpResponse
 from django.utils import timezone
-from import_export import resources, fields
-from import_export.admin import ImportExportModelAdmin, ImportExportActionModelAdmin
-from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
-from .models import *
-from utils.models import *
-from django.contrib.gis.db import models
-from mapwidgets.widgets import GooglePointFieldInlineWidget
 from leaflet.admin import LeafletGeoAdminMixin
-from advanced_filters.admin import AdminAdvancedFiltersMixin
+from utils.models import *
+
 
 class OriginItemInline(LeafletGeoAdminMixin, admin.StackedInline):
     model = Origin
     extra = 1
 
+
 class DestinationItemInline(LeafletGeoAdminMixin, admin.StackedInline):
     model = Destination
     extra = 1
 
+
 class PackageItemInline(admin.TabularInline):
     model = OrderPackage
     extra = 1
+
 
 class OrderStatusInline(admin.TabularInline):
     model = OrderStatus
@@ -34,6 +34,7 @@ class OrderStatusInline(admin.TabularInline):
 
     def get_readonly_fields(self, request, obj=None):
         return [f.name for f in self.model._meta.fields]
+
 
 class OrderAdmin(admin.ModelAdmin):
 
@@ -52,7 +53,7 @@ class OrderAdmin(admin.ModelAdmin):
                      'fields': ('created_at', 'start_time', 'end_time', 'duration')
                  }),
                  )
-                 
+              
     readonly_fields = ['id', 'created_at']
     massadmin_exclude = [f.name for f in model._meta.fields if f.name not in ('last_status', 'last_provider', 'last_driver', 'last_location', 'last_description')]
     # list of fields to display in django admin
