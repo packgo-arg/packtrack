@@ -4,7 +4,7 @@ from drf_extra_fields.geo_fields import PointField
 from django.utils import timezone
 from tasks.models import Order, Origin, Destination, OrderStatus, OrderPackage
 from tasks.services import DataService, ValidateService, LocationService, CalcService
-from utils.models import Status, State, Client, Package
+from utils.models import Status, State, Client, Package, Driver
 import datetime as dt
 import time, os
 import geocoder
@@ -37,7 +37,7 @@ class OrderStatusSerializer(serializers.ModelSerializer):
     Returns:
         string: location instance
     """
-
+    driver = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
 
     class Meta:
@@ -47,24 +47,23 @@ class OrderStatusSerializer(serializers.ModelSerializer):
             'status',
             'driver',
             'location',
-            'description',
             'st_update'
         )
     
     def get_driver(self, obj):
+        if not obj.driver_id: return None
         try:
             driver_inst = Driver.objects.get(pk=obj.driver_id)
-            print(driver_inst.driv_name)
             return driver_inst.driv_name
-        except Status.DoesNotExist:
+        except Driver.DoesNotExist:
             raise serializers.ValidationError('Could not validate Driver')
 
     def get_location(self, obj):
+        if not obj.location_id: return None
         try:
             location_inst = State.objects.get(pk=obj.location_id)
-            print(location_inst.city)
             return location_inst.city
-        except Status.DoesNotExist:
+        except State.DoesNotExist:
             raise serializers.ValidationError('Could not validate Locality')
 
 
@@ -312,7 +311,7 @@ class OrderPriceSerializer(serializers.ModelSerializer):
         model = Order
         fields = (
             'id',
-            'request_id',
+            #'request_id',
             'created_at',
             'ord_price',
             'packages'
@@ -357,10 +356,6 @@ class OrderSerializer(serializers.ModelSerializer):
         """
         start_time = time.time()
         print('--- INICIO ORDER_TO_INTERNAL ---')
-
-        #client_inst = Client.objects.get(username=self.context['request'].user)
-
-        #value['client'] = client_inst.id
 
         if 'origins' not in value.keys():
             value['origins'] = dict(DataService.getOrigin())
