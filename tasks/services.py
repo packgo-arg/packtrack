@@ -182,7 +182,7 @@ class LocationService(object):
                 distance = response.get('rows')[0].get('elements')[0].get('distance').get('value') / 1000
             except Exception:
                 raise serializers.ValidationError("Error: Cannot calculate distance")
-        
+
         if distance < 51:
             deltime = 6
         elif distance > 50 and distance < 701:
