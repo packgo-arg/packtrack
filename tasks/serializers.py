@@ -280,8 +280,8 @@ class PackageSerializer(serializers.ModelSerializer):
                 if client_inst.unit_type == 0:
                     try:
                         value['volume'] = value.get('height') * value.get('width') * value.get('length') / 1000**3
-                    except:
-                        raise serializers.ValidationError('Missing measure')
+                    except Exception as e:
+                        raise serializers.ValidationError(e.message)
 
                     value['pack_price'] = client_inst.base_price + (value['quantity'] * client_inst.unit_price * value['volume'])
 
@@ -375,11 +375,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
         start_time = time.time()
         print('--- INICIO ORDER_VALIDATE ---')
-        try:
-            value['duration'], distance = LocationService.getDeliveryTime(value['origins']['location'], value['destinations']['location'])
-        except:
-            value['duration'] = 99
-            raise serializers.ValidationError('Could not parse coordinates')
+        
+        value['duration'], distance = LocationService.getDeliveryTime(value['origins']['location'], value['destinations']['location'])
 
         if bool('start_time' in value.keys()) != bool('end_time' in value.keys()):
             raise serializers.ValidationError({"time_fields": "Must enter both start and end time"})
