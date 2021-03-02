@@ -5,7 +5,6 @@ from googlemaps import Client as GoogleMaps
 import herepy
 import requests
 import time
-import datetime as dt
 from rest_framework import serializers
 
 
@@ -171,17 +170,9 @@ class LocationService(object):
         start_time = time.time()
 
         routingApi = herepy.RoutingApi(os.getenv("HERE_KEY"))
-        gm = GoogleMaps(os.getenv("GOOGLE_KEY"))
 
-        try:
-            response = routingApi.truck_route(ori.coords[::-1], dest.coords[::-1], [herepy.RouteMode.truck, herepy.RouteMode.fastest]).as_dict()
-            distance = response.get('response').get('route')[0].get('summary').get('distance') / 1000
-        except herepy.error.HEREError:
-            try:
-                response = gm.distance_matrix(ori.coords[::-1], dest.coords[::-1], mode="driving", departure_time=dt.datetime.now(), traffic_model="pessimistic")
-                distance = response.get('rows')[0].get('elements')[0].get('distance').get('value') / 1000
-            except Exception:
-                raise serializers.ValidationError("Error: Cannot calculate distance")
+        response = routingApi.truck_route(ori.coords[::-1], dest.coords[::-1], [herepy.RouteMode.truck, herepy.RouteMode.fastest]).as_dict()
+        distance = response.get('response').get('route')[0].get('summary').get('distance') / 1000
 
         if distance < 51:
             deltime = 6
