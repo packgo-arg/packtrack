@@ -176,7 +176,6 @@ class LocationService(object):
         try:
             response = routingApi.truck_route(ori.coords[::-1], dest.coords[::-1], [herepy.RouteMode.truck, herepy.RouteMode.fastest]).as_dict()
             distance = response.get('response').get('route')[0].get('summary').get('distance') / 1000
-            print("HERE")
         except herepy.error.HEREError:
             try:
                 response = gm.distance_matrix(ori.coords[::-1], dest.coords[::-1], mode="driving", departure_time=dt.datetime.now(), traffic_model="pessimistic")
