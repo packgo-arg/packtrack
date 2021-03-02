@@ -35,7 +35,7 @@ class Order(models.Model):
 
     def __str__(self):
         """A string representation of the model."""
-        return self.title +' '+self.request_id
+        return f"Cliente: {self.client} - ID: {self.id}"
 
     def status(self):
         status = self.last_status.id
