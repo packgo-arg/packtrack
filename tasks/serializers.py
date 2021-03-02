@@ -8,7 +8,6 @@ from utils.models import Status, State, Client, Package, Driver
 import datetime as dt
 import time, os
 import geocoder
-from random import randint
 
 class ReturnSerializer(serializers.ModelSerializer):
 
@@ -281,8 +280,8 @@ class PackageSerializer(serializers.ModelSerializer):
                 if client_inst.unit_type == 0:
                     try:
                         value['volume'] = value.get('height') * value.get('width') * value.get('length') / 1000**3
-                    except Exception as e:
-                        raise serializers.ValidationError(e.message)
+                    except:
+                        raise serializers.ValidationError('Missing measure')
 
                     value['pack_price'] = client_inst.base_price + (value['quantity'] * client_inst.unit_price * value['volume'])
 
@@ -356,7 +355,6 @@ class OrderSerializer(serializers.ModelSerializer):
             json: order request pre processed data.
         """
         start_time = time.time()
-        print(f"INICIO DE RUTINA: {start_time}")
         print('--- INICIO ORDER_TO_INTERNAL ---')
 
         if 'origins' not in value.keys():
@@ -377,7 +375,11 @@ class OrderSerializer(serializers.ModelSerializer):
 
         start_time = time.time()
         print('--- INICIO ORDER_VALIDATE ---')
-        value['duration'], distance = LocationService.getDeliveryTime(value['origins']['location'], value['destinations']['location'])
+        try:
+            value['duration'], distance = LocationService.getDeliveryTime(value['origins']['location'], value['destinations']['location'])
+        except:
+            value['duration'] = 99
+            raise serializers.ValidationError('Could not parse coordinates')
 
         if bool('start_time' in value.keys()) != bool('end_time' in value.keys()):
             raise serializers.ValidationError({"time_fields": "Must enter both start and end time"})
