@@ -36,7 +36,7 @@ class Package(models.Model):
         if (self.height != 0) and (self.width != 0) and (self.length != 0):
             self.volume = self.height * self.width * self.length
 
-        super(State, self).save(*args, **kwargs)
+        super(Package, self).save(*args, **kwargs)
 
 
 class Status(models.Model):
