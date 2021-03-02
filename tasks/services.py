@@ -170,17 +170,8 @@ class LocationService(object):
         start_time = time.time()
 
         routingApi = herepy.RoutingApi(os.getenv("HERE_KEY"))
-        #gm = GoogleMaps(os.getenv("GOOGLE_KEY_PERS"))
 
-        try:
-            response = routingApi.truck_route(ori.coords[::-1], dest.coords[::-1], [herepy.RouteMode.truck, herepy.RouteMode.fastest]).as_dict()
-            distance = response.get('response').get('route')[0].get('summary').get('distance') / 1000
-        except NGEO_ERROR_GRAPH_DISCONNECTED:
-            response = gm.directions(ori.coords[::-1], dest.coords[::-1], mode="driving", departure_time=dt.datetime.now(), traffic_model="pessimistic")
-            distance = distance_result.get('rows')[0].get('elements')[0].get('distance').get('value') / 1000
-        except Exception as e:
-            raise serializers.ValidationError(e)
-            
+        response = routingApi.truck_route(ori.coords[::-1], dest.coords[::-1], [herepy.RouteMode.truck, herepy.RouteMode.fastest]).as_dict()
         distance = response.get('response').get('route')[0].get('summary').get('distance') / 1000
 
         if distance < 51:
