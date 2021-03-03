@@ -157,6 +157,8 @@ class DestinationSerializer(serializers.ModelSerializer):
         model = Destination
         fields = (
             'name',
+            'email',
+            'phone',
             'street',
             'house_num',
             'ap_unit',
@@ -375,7 +377,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
         start_time = time.time()
         print('--- INICIO ORDER_VALIDATE ---')
-        
+
         value['duration'], distance = LocationService.getDeliveryTime(value['origins']['location'], value['destinations']['location'])
 
         if bool('start_time' in value.keys()) != bool('end_time' in value.keys()):

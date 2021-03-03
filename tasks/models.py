@@ -91,6 +91,8 @@ class Destination(models.Model):
 
     order = models.OneToOneField(Order, related_name='destinations', on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
+    email = models.EmailField(max_length=50, null=true, blank=true)
+    phone = models.CharField(max_length=50, null=true, blank=true)
     street = models.CharField(max_length=50)
     house_num = models.CharField(max_length=10)
     ap_unit = models.CharField(max_length=50, null=True, blank=True)
