@@ -1,5 +1,5 @@
 from django.db import models as dbmodels
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from utils.models import Package, Status, State, Client, Provider, Driver
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
@@ -9,10 +9,10 @@ import uuid
 
 class Order(models.Model):
 
-    STATUS_CHOICE=()
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order_id = models.CharField(max_length=10, validators=[RegexValidator(regex='^[A-Z]{4}[0-9]{6}$', message='Length has to be 10', code='nomatch')], default='AAAA000000')
     # required fields
-    title = models.CharField(max_length=50)
+    title = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     request_id = models.CharField(max_length=50, null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
@@ -69,11 +69,11 @@ class Order(models.Model):
 class Origin(models.Model):
 
     order = models.OneToOneField(Order, related_name='origins', on_delete=models.CASCADE)
-    name = models.CharField(max_length=50)
-    street = models.CharField(max_length=50)
+    name = models.CharField(max_length=100)
+    street = models.CharField(max_length=100)
     house_num = models.CharField(max_length=10)
     ap_unit = models.CharField(max_length=10, null=True, blank=True)
-    suburb = models.CharField(max_length=50, null=True, blank=True)
+    suburb = models.CharField(max_length=100, null=True, blank=True)
     city = models.CharField(max_length=50)
     province = models.CharField(max_length=50)
     country = models.CharField(max_length=50)
@@ -90,11 +90,13 @@ class Origin(models.Model):
 class Destination(models.Model):
 
     order = models.OneToOneField(Order, related_name='destinations', on_delete=models.CASCADE)
-    name = models.CharField(max_length=50)
-    street = models.CharField(max_length=50)
+    name = models.CharField(max_length=100)
+    email = models.EmailField(max_length=50, null=True, blank=True)
+    phone = models.CharField(max_length=50, null=True, blank=True)
+    street = models.CharField(max_length=100)
     house_num = models.CharField(max_length=10)
     ap_unit = models.CharField(max_length=50, null=True, blank=True)
-    suburb = models.CharField(max_length=50, null=True, blank=True)
+    suburb = models.CharField(max_length=100, null=True, blank=True)
     city = models.CharField(max_length=50, null=True)
     province = models.CharField(max_length=50)
     country = models.CharField(max_length=50)
@@ -112,13 +114,13 @@ class OrderPackage(models.Model):
 
     order = models.ForeignKey(Order, related_name='packages', on_delete=models.CASCADE)
     pack_type = models.ForeignKey(Package, on_delete=models.CASCADE, null=True)
-    height = models.FloatField(default=0, validators=[MinValueValidator(0)])
-    width = models.FloatField(default=0, validators=[MinValueValidator(0)])
-    length = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    height = models.PositiveIntegerField(default=0, verbose_name='Height in mm')
+    width = models.PositiveIntegerField(default=0, verbose_name='Width in mm')
+    length = models.PositiveIntegerField(default=0, verbose_name='Length in mm')
     volume = models.FloatField(default=0, validators=[MinValueValidator(0)])
     weight = models.FloatField(default=0, validators=[MinValueValidator(0)])
-    quantity = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(99)])
-    pack_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    quantity = models.PositiveIntegerField(default=0, validators=[MaxValueValidator(99)])
+    package_id = models.CharField(max_length=13, validators=[RegexValidator(regex='^.[A-Z]{4}[0-9]{6}-[0-9]{2}$', message='Length has to be 13', code='nomatch')], default='AAAA000000-00')
 
     def __int__(self):
         return self.id

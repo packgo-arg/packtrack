@@ -8,22 +8,30 @@ from utils.models import Status, State, Client, Package, Driver
 import datetime as dt
 import time, os
 import geocoder
+import logging
+
+logger = logging.getLogger('api')
 
 class ReturnSerializer(serializers.ModelSerializer):
 
     """
     Serializer for returning Order Post Information
     """
+    tag = serializers.SerializerMethodField('get_order_id')
 
     class Meta:
         model = Order
         fields = (
             'id',
+            'tag',
             'request_id',
             'start_time',
             'end_time',
             'duration'
         )
+    
+    def get_order_id(self, obj):
+        return obj.order_id
 
 
 class OrderStatusSerializer(serializers.ModelSerializer):
@@ -157,6 +165,8 @@ class DestinationSerializer(serializers.ModelSerializer):
         model = Destination
         fields = (
             'name',
+            'email',
+            'phone',
             'street',
             'house_num',
             'ap_unit',
@@ -241,7 +251,6 @@ class PackageSerializer(serializers.ModelSerializer):
             'volume',
             'weight',
             'quantity',
-            'pack_price',
         )
     
     def _user(self, obj):
@@ -263,27 +272,21 @@ class PackageSerializer(serializers.ModelSerializer):
         start_time = time.time()
         print('--- INICIO PACKAGE_VALIDATE ---')
         pk_info = Package.objects.get(pkg_name=value['pack_type'])
-        client_inst = Client.objects.get(id=self.root.initial_data['client'])
+        client = Client.objects.get(id=self.root.initial_data['client'])
+        
+        if client.price_calc == 0:
+            if client.unit_type == 0:
+                keys = ['height', 'width', 'length']
+            elif client.unit_type == 1:
+                keys = ['weight']
 
-        if pk_info.id == 1:
-            value['pack_price'] = client_inst.base_price * value['quantity']
-        elif pk_info.id == 3:
-            value['height'] = 2000
-            value['width'] = 1000
-            value['length'] = 1000
-            value['volume'] = value.get('height') * value.get('width') * value.get('length') / 1000**3
-            value['pack_price'] = client_inst.base_price + (value['quantity'] * client_inst.unit_price * value['volume'])
-        else:
-            if client_inst.price_calc == 1:
-                value['pack_price'] = client_inst.base_price * value['quantity']
-            else:
-                if client_inst.unit_type == 0:
-                    try:
-                        value['volume'] = value.get('height') * value.get('width') * value.get('length') / 1000**3
-                    except Exception as e:
-                        raise serializers.ValidationError(e.message)
+            if pk_info.id == 2 and (not all(key in value for key in keys) or not any(v>0 for k, v in value.items() if k in keys)):
+                raise serializers.ValidationError({'Error': 'Must provide package measurements'})
+            elif pk_info.id != 2 and client.unit_type == 0:
+                for _, key in enumerate(keys):
+                    value[key] = pk_info.__dict__.get(key)
 
-                    value['pack_price'] = client_inst.base_price + (value['quantity'] * client_inst.unit_price * value['volume'])
+        value['volume'] = value.get('height', 0) * value.get('width', 0) * value.get('length', 0) / (1000**3)
 
         print('--- Tiempo de ejecucion Package_validate: {} segundos ---'.format((time.time() - start_time)))
         return value
@@ -311,7 +314,6 @@ class OrderPriceSerializer(serializers.ModelSerializer):
         model = Order
         fields = (
             'id',
-            #'request_id',
             'created_at',
             'ord_price',
             'packages'
@@ -330,6 +332,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = (
             'id',
+            'order_id',
             'client',
             'request_id',
             'title',
@@ -356,7 +359,9 @@ class OrderSerializer(serializers.ModelSerializer):
         """
         start_time = time.time()
         print('--- INICIO ORDER_TO_INTERNAL ---')
-
+        client_instance = Client.objects.get(users=self.context['request'].user)
+        last_order = Order.objects.filter(client=client_instance.id).latest('created_at')
+        value['order_id'] = DataService.generateOrderId(last_order, client_instance.client_code)
         if 'origins' not in value.keys():
             value['origins'] = dict(DataService.getOrigin())
         print('--- Tiempo de ejecucion Order_to_internal: {} segundos ---'.format((time.time() - start_time)))
@@ -375,7 +380,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
         start_time = time.time()
         print('--- INICIO ORDER_VALIDATE ---')
-        
+
         value['duration'], distance = LocationService.getDeliveryTime(value['origins']['location'], value['destinations']['location'])
 
         if bool('start_time' in value.keys()) != bool('end_time' in value.keys()):
@@ -393,12 +398,19 @@ class OrderSerializer(serializers.ModelSerializer):
             if value['end_time'] < value['start_time']:
                 raise serializers.ValidationError({"end_time": "End time cannot be before Start time"})
 
-        value['ord_price'] = 0
+        client = Client.objects.get(id=self.root.initial_data['client'])
+        order_volume = 0
 
-        for pack in value['packages']:
-            pk_info = Package.objects.get(pkg_name=pack['pack_type'])
-            pack['pack_price'] = CalcService.calcOrderPrice(distance, pack, pk_info)
-            value['ord_price'] += pack['pack_price']
+        for idx, pack in enumerate(value['packages'], 1):
+            order_volume += pack['volume'] * pack['quantity']
+            pack['package_id'] = f"{value['order_id']}-{idx:02d}"
+        if client.price_calc == 0:
+            value['ord_price'] = client.base_price + (client.unit_price * order_volume)
+        else:
+            value['ord_price'] = client.base_price
+            
+        value['ord_price'] = round(CalcService.calcOrderPrice(distance, value['ord_price'], client.distance_coef), 2)
+
         print('--- Tiempo de ejecucion Order_validate: {} segundos ---'.format((time.time() - start_time)))
         return value
 
