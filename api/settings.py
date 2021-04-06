@@ -15,6 +15,11 @@ import sys
 import dj_database_url
 import dotenv
 from datetime import timedelta
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+import logging.config
+import os
+from django.utils.log import DEFAULT_LOGGING
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -158,27 +163,6 @@ MAP_WIDGETS = {
     "GOOGLE_MAP_API_KEY": os.getenv("GOOGLE_KEY")
 }
 
-MATERIAL_ADMIN_SITE = {
-    'HEADER':  'PAGO GO',  # Admin site header
-    'TITLE':  'PACK GO ADMIN',  # Admin site title
-    #'FAVICON':  'path/to/favicon',  # Admin site favicon (path to static should be specified)
-    'MAIN_BG_COLOR':  '#22326E',  # Admin site main color, css color should be specified
-    'MAIN_HOVER_COLOR':  '#101630',  # Admin site main hover color, css color should be specified
-    #'PROFILE_PICTURE':  'path/to/image',  # Admin site profile picture (path to static should be specified)
-    #'PROFILE_BG':  'path/to/image',  # Admin site profile background (path to static should be specified)
-    #'LOGIN_LOGO':  'path/to/image',  # Admin site logo on login page (path to static should be specified)
-    #'LOGOUT_BG':  'path/to/image',  # Admin site background on login/logout pages (path to static should be specified)
-    #'SHOW_THEMES':  True,  #  Show default admin themes button
-    'TRAY_REVERSE': True,  # Hide object-tools and additional-submit-line by default
-    'NAVBAR_REVERSE': True,  # Hide side navbar by default
-    'SHOW_COUNTS': True, # Show instances counts for each model
-    'APP_ICONS': {  # Set icons for applications(lowercase), including 3rd party apps, {'application_name': 'material_icon_name', ...}
-        'sites': 'send',
-    },
-    'MODEL_ICONS': {  # Set icons for models(lowercase), including 3rd party models, {'model_name': 'material_icon_name', ...}
-        'site': 'contact_mail',
-    }
-}
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
@@ -211,26 +195,75 @@ sys.path.append(os.path.join(PROJECT_ROOT, 'tasks/lib'))
 
 JET_DEFAULT_THEME = 'default'
 JET_SIDE_MENU_COMPACT = True
-#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-#SECURE_SSL_REDIRECT = True
-#SESSION_COOKIE_SECURE = True
-#CSRF_COOKIE_SECURE = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 LOG_LEVEL = bool(os.environ.get("LOG_LEVEL", default=0))
 
-if LOG_LEVEL == 1:
     
-    LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-            },
+sentry_sdk.init(
+    dsn=os.environ.get("SENTRY_DNS"),
+    integrations=[DjangoIntegration()],
+
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0,
+
+    # If you wish to associate users to errors (assuming you are using
+    # django.contrib.auth) you may enable sending PII data.
+    send_default_pii=True
+)
+
+# Disable Django's logging setup
+LOGGING_CONFIG = None
+
+LOGLEVEL = os.environ.get('LOG_LEVEL', 'info').upper()
+
+logging.config.dictConfig({
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'default': {
+            # exact format is not important, this is the minimum information
+            'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
         },
-        'loggers': {
-            'django': {
-                'handlers': ['console'],
-                 'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
-            },
+        'django.server': DEFAULT_LOGGING['formatters']['django.server'],
+    },
+    'handlers': {
+        # console logs to stderr
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'default',
         },
-    }
+        # Add Handler for Sentry for `warning` and above
+        'sentry': {
+            'level': 'WARNING',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
+        'django.server': DEFAULT_LOGGING['handlers']['django.server'],
+    },
+    'loggers': {
+        # default for all undefined Python modules
+        '': {
+            'level': 'WARNING',
+            'handlers': ['console', 'sentry'],
+        },
+        # Our application code
+        'api': {
+            'level': LOGLEVEL,
+            'handlers': ['console', 'sentry'],
+            # Avoid double logging because of root logger
+            'propagate': False,
+        },
+        # Prevent noisy modules from logging to Sentry
+        'noisy_module': {
+            'level': 'ERROR',
+            'handlers': ['console'],
+            'propagate': False,
+        },
+        # Default runserver request logging
+        'django.server': DEFAULT_LOGGING['loggers']['django.server'],
+    },
+})
