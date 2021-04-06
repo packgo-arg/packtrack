@@ -29,7 +29,7 @@ class ProvAdmin(admin.ModelAdmin):
 
 class PkgAdmin(admin.ModelAdmin):
     icon_name = 'mail_outline'
-    readonly_fields = ['id', 'created_at']
+    readonly_fields = ['volume', 'id', 'created_at']
     list_display = ['pkg_name','id','created_at']
 
 
