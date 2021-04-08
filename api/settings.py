@@ -209,8 +209,6 @@ if ENVIRON != 'LOCAL':
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-LOG_LEVEL = bool(os.environ.get("LOG_LEVEL", default=0))
-
 sentry_logging = LoggingIntegration(
         level=logging.INFO,
         event_level=logging.WARNING,
@@ -231,7 +229,7 @@ sentry_sdk.init(
 
     # If you wish to associate users to errors (assuming you are using
     # django.contrib.auth) you may enable sending PII data.
-    send_default_pii=False
+    send_default_pii=True
 )
 
 # Disable Django's logging setup
