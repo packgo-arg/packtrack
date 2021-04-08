@@ -7,7 +7,8 @@ import requests
 import time
 import datetime as dt
 from rest_framework import serializers
-
+from sentry_sdk import capture_message
+from sentry_sdk import capture_exception
 
 class DataService(object):
 
@@ -167,7 +168,9 @@ class LocationService(object):
                         data['short'].update([(category, item['short_name'])])
                 data['location'] = geolist['geometry']['location']
         else:
-            raise serializers.ValidationError('GeoCoding Error: Could not parse coordinates')
+            e = serializers.ValidationError('GeoCoding Error: Could not parse coordinates')
+            capture_message(e)
+            raise e
 
         print('--- Tiempo de ejecucion getCoord: {} segundos ---'.format((time.time() - start_time)))
 
@@ -194,8 +197,9 @@ class LocationService(object):
             try:
                 response = gm.distance_matrix(ori.coords[::-1], dest.coords[::-1], mode="driving", departure_time=dt.datetime.now(), traffic_model="pessimistic")
                 distance = response.get('rows')[0].get('elements')[0].get('distance').get('value') / 1000
-            except Exception:
-                raise serializers.ValidationError("Error: Cannot calculate distance")
+            except Exception as e:
+                capture_exception(e)
+                raise e
 
         if distance < 51:
             deltime = 6

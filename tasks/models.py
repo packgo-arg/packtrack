@@ -1,4 +1,3 @@
-from django.db import models as dbmodels
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from utils.models import Package, Status, State, Client, Provider, Driver
 from django.contrib.gis.db import models
@@ -10,7 +9,11 @@ import uuid
 class Order(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    order_id = models.CharField(max_length=10, validators=[RegexValidator(regex='^[A-Z]{4}[0-9]{6}$', message='Length has to be 10', code='nomatch')], default='AAAA000000')
+    order_id = models.CharField(max_length=10,
+                                validators=[RegexValidator(regex='^[A-Z]{4}[0-9]{6}$',
+                                                           message='Length has to be 10',
+                                                           code='nomatch')],
+                                default='AAAA000000')
     # required fields
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True)
@@ -25,11 +28,13 @@ class Order(models.Model):
     duration = models.PositiveIntegerField(null=True, blank=True)
 
     last_status = models.ForeignKey(Status, on_delete=models.CASCADE, default=1)
-    last_provider = models.ForeignKey(Provider, on_delete=models.CASCADE, default='4fd1d932-f86a-456b-9f39-f9919ad22040')
+    last_provider = models.ForeignKey(Provider,
+                                      on_delete=models.CASCADE,
+                                      default='4fd1d932-f86a-456b-9f39-f9919ad22040')
     last_driver = models.ForeignKey(Driver, on_delete=models.CASCADE, null=True, blank=True)
     last_location = models.ForeignKey(State, on_delete=models.CASCADE, null=True, blank=True)
     last_description = models.CharField(max_length=150, null=True, blank=True)
-    
+
     accidental_delivery_duration = models.PositiveIntegerField(null=True, blank=True)
     ord_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
 
@@ -61,14 +66,17 @@ class Order(models.Model):
             location=self.last_location,
             description=self.last_description
         )
-        
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.update_status_record()
-         
+
+
 class Origin(models.Model):
 
-    order = models.OneToOneField(Order, related_name='origins', on_delete=models.CASCADE)
+    order = models.OneToOneField(Order,
+                                 related_name='origins',
+                                 on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     street = models.CharField(max_length=100)
     house_num = models.CharField(max_length=10)
@@ -89,7 +97,9 @@ class Origin(models.Model):
 
 class Destination(models.Model):
 
-    order = models.OneToOneField(Order, related_name='destinations', on_delete=models.CASCADE)
+    order = models.OneToOneField(Order,
+                                 related_name='destinations',
+                                 on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     email = models.EmailField(max_length=50, null=True, blank=True)
     phone = models.CharField(max_length=50, null=True, blank=True)
@@ -119,8 +129,13 @@ class OrderPackage(models.Model):
     length = models.PositiveIntegerField(default=0, verbose_name='Length in mm')
     volume = models.FloatField(default=0, validators=[MinValueValidator(0)])
     weight = models.FloatField(default=0, validators=[MinValueValidator(0)])
-    quantity = models.PositiveIntegerField(default=0, validators=[MaxValueValidator(99)])
-    package_id = models.CharField(max_length=13, validators=[RegexValidator(regex='^.[A-Z]{4}[0-9]{6}-[0-9]{2}$', message='Length has to be 13', code='nomatch')], default='AAAA000000-00')
+    quantity = models.PositiveIntegerField(default=0,
+                                           validators=[MaxValueValidator(99)])
+    package_id = models.CharField(max_length=13,
+                                  validators=[RegexValidator(regex='^.[A-Z]{4}[0-9]{6}-[0-9]{2}$',
+                                                             message='Length has to be 13',
+                                                             code='nomatch')],
+                                  default='AAAA000000-00')
 
     def __int__(self):
         return self.id
