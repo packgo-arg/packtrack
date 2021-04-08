@@ -17,6 +17,8 @@ import dotenv
 from datetime import timedelta
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+import logging
 import logging.config
 import os
 from django.utils.log import DEFAULT_LOGGING
@@ -42,6 +44,8 @@ DEBUG = bool(os.environ.get("DEBUG", default=0))
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", default=0).split()
 
+ENVIRON = os.environ.get("ENVIRON", default="LOCAL").upper()
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -63,9 +67,12 @@ INSTALLED_APPS = [
     'leaflet',
     'advanced_filters',
     'massadmin',
+    'raven.contrib.django.raven_compat',
 ]
 
 MIDDLEWARE = [
+    'django_sentry_400_middleware.Sentry400CatchMiddleware',
+    'raven.contrib.django.raven_compat.middleware.Sentry404CatchMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -195,16 +202,27 @@ sys.path.append(os.path.join(PROJECT_ROOT, 'tasks/lib'))
 
 JET_DEFAULT_THEME = 'default'
 JET_SIDE_MENU_COMPACT = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+
+if ENVIRON != 'LOCAL':
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
 LOG_LEVEL = bool(os.environ.get("LOG_LEVEL", default=0))
 
-    
+sentry_logging = LoggingIntegration(
+        level=logging.INFO,
+        event_level=logging.WARNING,
+        # The default event_level is logging.ERROR, which will report any
+        # "logging.error(...)" call to Sentry.  However, we respond to
+        # incorrect usage with "logging.error(...)" messages, which we don't
+        # want to report to Sentry.
+    )
+
 sentry_sdk.init(
     dsn=os.environ.get("SENTRY_DNS"),
-    integrations=[DjangoIntegration()],
+    integrations=[DjangoIntegration(), sentry_logging],
 
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.
@@ -213,7 +231,7 @@ sentry_sdk.init(
 
     # If you wish to associate users to errors (assuming you are using
     # django.contrib.auth) you may enable sending PII data.
-    send_default_pii=True
+    send_default_pii=False
 )
 
 # Disable Django's logging setup
@@ -227,7 +245,9 @@ logging.config.dictConfig({
     'formatters': {
         'default': {
             # exact format is not important, this is the minimum information
-            'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+            '()':'django.utils.log.ServerFormatter',
+            'format':'[{server_time}] [{levelname}] {message}',
+            'style':'{'
         },
         'django.server': DEFAULT_LOGGING['formatters']['django.server'],
     },
@@ -239,7 +259,7 @@ logging.config.dictConfig({
         },
         # Add Handler for Sentry for `warning` and above
         'sentry': {
-            'level': 'WARNING',
+            'level': 'DEBUG',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
         },
         'django.server': DEFAULT_LOGGING['handlers']['django.server'],
@@ -267,3 +287,6 @@ logging.config.dictConfig({
         'django.server': DEFAULT_LOGGING['loggers']['django.server'],
     },
 })
+
+logger = logging.getLogger('api')
+logger.info(LOGLEVEL)
