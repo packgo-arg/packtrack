@@ -34,6 +34,4 @@ urlpatterns = [
     path('api/tasks/', include('tasks.urls')),
     # Advanced Filters
     path('advanced_filters/', include('advanced_filters.urls')),
-    #Tienda Nube
-    path('tiendanube/', include('tiendanube.urls')),
 ]
