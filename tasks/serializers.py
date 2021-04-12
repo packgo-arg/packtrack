@@ -320,7 +320,6 @@ class PackCalcSerializer(serializers.ModelSerializer):
         fields = (
             'pack_type',
             'quantity',
-            'pack_price',
         )
 
 
@@ -380,8 +379,11 @@ class OrderSerializer(serializers.ModelSerializer):
         start_time = time.time()
         print('--- INICIO ORDER_TO_INTERNAL ---')
         client_instance = Client.objects.get(users=self.context['request'].user)
-        last_order = Order.objects.filter(client=client_instance.id).latest('created_at')
-        value['order_id'] = DataService.generateOrderId(last_order, client_instance.client_code)
+        try:
+            last_order_id = Order.objects.filter(client=client_instance.id).latest('created_at').order_id
+        except:
+            last_order_id = "AAAA000000"
+        value['order_id'] = DataService.generateOrderId(last_order_id, client_instance.client_code)
         if 'origins' not in value.keys():
             value['origins'] = dict(DataService.getOrigin())
         print('--- Tiempo de ejecucion Order_to_internal: {} segundos ---'.format((time.time() - start_time)))

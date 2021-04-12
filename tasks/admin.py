@@ -57,13 +57,13 @@ class OrderAdmin(admin.ModelAdmin):
     readonly_fields = ['id', 'created_at', 'order_id']
     massadmin_exclude = [f.name for f in model._meta.fields if f.name not in ('last_status', 'last_provider', 'last_driver', 'last_location', 'last_description')]
     # list of fields to display in django admin
-    list_display = ('order_id', 'client', 'created_at', 'start_time', 'end_time', 'status')
+    list_display = ('order_id', 'title', 'client', 'created_at', 'start_time', 'end_time', 'status')
     #list_display_links = ('title', 'last_status')
     ordering = ('-created_at',)
     # if you want django admin to show the search bar, just add this line
     search_fields = ("title__startswith", )
     filter_horizontal = ()
-    list_filter = ('client', 'start_time', 'end_time', 'last_status')
+    list_filter = ('client', 'title', 'start_time', 'end_time', 'last_status')
 
     # inlines
     inlines = (OriginItemInline, DestinationItemInline, PackageItemInline, OrderStatusInline,)
