@@ -8,22 +8,31 @@ from utils.models import Status, State, Client, Package, Driver
 import datetime as dt
 import time, os
 import geocoder
+import logging
+from sentry_sdk import capture_message
+from sentry_sdk import capture_exception
+logger = logging.getLogger('api')
 
 class ReturnSerializer(serializers.ModelSerializer):
 
     """
     Serializer for returning Order Post Information
     """
+    tag = serializers.SerializerMethodField('get_order_id')
 
     class Meta:
         model = Order
         fields = (
             'id',
+            'tag',
             'request_id',
             'start_time',
             'end_time',
             'duration'
         )
+    
+    def get_order_id(self, obj):
+        return obj.order_id
 
 
 class OrderStatusSerializer(serializers.ModelSerializer):
@@ -55,16 +64,18 @@ class OrderStatusSerializer(serializers.ModelSerializer):
         try:
             driver_inst = Driver.objects.get(pk=obj.driver_id)
             return driver_inst.driv_name
-        except Driver.DoesNotExist:
-            raise serializers.ValidationError('Could not validate Driver')
+        except Driver.DoesNotExist as e:
+            capture_exception(e)
+            raise serializers.ValidationError(e)
 
     def get_location(self, obj):
         if not obj.location_id: return None
         try:
             location_inst = State.objects.get(pk=obj.location_id)
             return location_inst.city
-        except State.DoesNotExist:
-            raise serializers.ValidationError('Could not validate Locality')
+        except State.DoesNotExist as e:
+            capture_exception(e)
+            raise serializers.ValidationError(e)
 
 
 class OriginSerializer(serializers.ModelSerializer):
@@ -111,14 +122,22 @@ class OriginSerializer(serializers.ModelSerializer):
             geo_data = geocoder.google(origin_address, key=os.getenv("GOOGLE_KEY"))
             if geo_data.ok:
                 value['geo_data'] = geo_data.json
-                value['location'] = dict(latitude=geo_data.latlng[0], longitude=geo_data.latlng[1])
+                value['location'] = dict(latitude=geo_data.latlng[0],
+                                         longitude=geo_data.latlng[1])
             else:
-                raise serializers.ValidationError({'Error': 'Could not get coordinates from data', 'Geodata': value})
+                e = serializers.ValidationError(
+                    {'Error': 'Could not get coordinates from data', 'Geodata': value}
+                    )
+                capture_message(e)
+                raise e
         else:
-            value['location'] = dict(latitude=float(value['latitude']), longitude=float(value['longitude']))
-            geo_data = geocoder.google(list(value['location'].values()), key=os.getenv("GOOGLE_KEY"), method='reverse')
+            value['location'] = dict(latitude=float(value['latitude']),
+                                     longitude=float(value['longitude']))
+            geo_data = geocoder.google(list(value['location'].values()),
+                                       key=os.getenv("GOOGLE_KEY"),
+                                       method='reverse')
             value['geo_data'] = geo_data.json
-            
+
         print('--- Tiempo de ejecucion Origin_to_internal: {} segundos ---'.format((time.time() - start_time)))
         return super().to_internal_value(value)
 
@@ -157,6 +176,8 @@ class DestinationSerializer(serializers.ModelSerializer):
         model = Destination
         fields = (
             'name',
+            'email',
+            'phone',
             'street',
             'house_num',
             'ap_unit',
@@ -191,14 +212,21 @@ class DestinationSerializer(serializers.ModelSerializer):
             geo_data = geocoder.google(destination_address, key=os.getenv("GOOGLE_KEY"))
             if geo_data.ok:
                 value['geo_data'] = geo_data.json
-                value['location'] = dict(latitude=geo_data.latlng[0], longitude=geo_data.latlng[1])
+                value['location'] = dict(latitude=geo_data.latlng[0],
+                                         longitude=geo_data.latlng[1])
             else:
-                raise serializers.ValidationError({'Error': 'Could not get coordinates from data', 'Geodata': value})
+                e = serializers.ValidationError({'Error': 'Could not get coordinates from data', 'Geodata': value})
+                capture_message(e)
+                raise e
         else:
-            value['location'] = dict(latitude=float(value['latitude']), longitude=float(value['longitude']))
-            geo_data = geocoder.google(list(value['location'].values()), key=os.getenv("GOOGLE_KEY"), method='reverse')
-            value['geo_data'] = geo_data.json
+            value['location'] = dict(latitude=float(value['latitude']),
+                                     longitude=float(value['longitude']))
+            geo_data = geocoder.google(list(value['location'].values()),
+                                       key=os.getenv("GOOGLE_KEY"),
+                                       method='reverse')
             
+            value['geo_data'] = geo_data.json
+
         print('--- Tiempo de ejecucion destination_to_internal: {} segundos ---'.format((time.time() - start_time)))
         return super().to_internal_value(value)
 
@@ -235,15 +263,14 @@ class PackageSerializer(serializers.ModelSerializer):
         model = OrderPackage
         fields = (
             'pack_type',
-            'height', 
+            'height',
             'width',
             'length',
             'volume',
             'weight',
             'quantity',
-            'pack_price',
         )
-    
+
     def _user(self, obj):
         request = self.context.get('request', None)
         if request:
@@ -263,27 +290,23 @@ class PackageSerializer(serializers.ModelSerializer):
         start_time = time.time()
         print('--- INICIO PACKAGE_VALIDATE ---')
         pk_info = Package.objects.get(pkg_name=value['pack_type'])
-        client_inst = Client.objects.get(id=self.root.initial_data['client'])
+        client = Client.objects.get(id=self.root.initial_data['client'])
 
-        if pk_info.id == 1:
-            value['pack_price'] = client_inst.base_price * value['quantity']
-        elif pk_info.id == 3:
-            value['height'] = 2000
-            value['width'] = 1000
-            value['length'] = 1000
-            value['volume'] = value.get('height') * value.get('width') * value.get('length') / 1000**3
-            value['pack_price'] = client_inst.base_price + (value['quantity'] * client_inst.unit_price * value['volume'])
-        else:
-            if client_inst.price_calc == 1:
-                value['pack_price'] = client_inst.base_price * value['quantity']
-            else:
-                if client_inst.unit_type == 0:
-                    try:
-                        value['volume'] = value.get('height') * value.get('width') * value.get('length') / 1000**3
-                    except Exception as e:
-                        raise serializers.ValidationError(e.message)
+        if client.price_calc == 0:
+            if client.unit_type == 0:
+                keys = ['height', 'width', 'length']
+            elif client.unit_type == 1:
+                keys = ['weight']
 
-                    value['pack_price'] = client_inst.base_price + (value['quantity'] * client_inst.unit_price * value['volume'])
+            if pk_info.id == 2 and (not all(key in value for key in keys) or not any(v>0 for k, v in value.items() if k in keys)):
+                e = serializers.ValidationError({'Error': 'Must provide package measurements'})
+                capture_message(e)
+                raise e
+            elif pk_info.id != 2 and client.unit_type == 0:
+                for _, key in enumerate(keys):
+                    value[key] = pk_info.__dict__.get(key)
+
+        value['volume'] = value.get('height', 0) * value.get('width', 0) * value.get('length', 0) / (1000**3)
 
         print('--- Tiempo de ejecucion Package_validate: {} segundos ---'.format((time.time() - start_time)))
         return value
@@ -306,12 +329,11 @@ class OrderPriceSerializer(serializers.ModelSerializer):
     """ Process Order Price Calculator requests with information regarding price of an estimated package delivery
     """
 
-    packages = PackCalcSerializer(many=True) 
+    packages = PackCalcSerializer(many=True)
     class Meta:
         model = Order
         fields = (
             'id',
-            #'request_id',
             'created_at',
             'ord_price',
             'packages'
@@ -330,6 +352,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = (
             'id',
+            'order_id',
             'client',
             'request_id',
             'title',
@@ -356,7 +379,9 @@ class OrderSerializer(serializers.ModelSerializer):
         """
         start_time = time.time()
         print('--- INICIO ORDER_TO_INTERNAL ---')
-
+        client_instance = Client.objects.get(users=self.context['request'].user)
+        last_order = Order.objects.filter(client=client_instance.id).latest('created_at')
+        value['order_id'] = DataService.generateOrderId(last_order, client_instance.client_code)
         if 'origins' not in value.keys():
             value['origins'] = dict(DataService.getOrigin())
         print('--- Tiempo de ejecucion Order_to_internal: {} segundos ---'.format((time.time() - start_time)))
@@ -375,30 +400,47 @@ class OrderSerializer(serializers.ModelSerializer):
 
         start_time = time.time()
         print('--- INICIO ORDER_VALIDATE ---')
-        
+
         value['duration'], distance = LocationService.getDeliveryTime(value['origins']['location'], value['destinations']['location'])
 
         if bool('start_time' in value.keys()) != bool('end_time' in value.keys()):
-            raise serializers.ValidationError({"time_fields": "Must enter both start and end time"})
-        
+            e = serializers.ValidationError({"time_fields": "Must enter both start and end time"})
+            capture_message(e)
+            raise e
+
         if 'start_time' not in value.keys():
             if timezone.localtime().time() < dt.time(15):
-                value['start_time'] = timezone.now().replace(hour=18, minute=0, second=0, microsecond=0)
+                value['start_time'] = timezone.now().replace(hour=18,
+                                                             minute=0,
+                                                             second=0,
+                                                             microsecond=0)
             else:
-                value['start_time'] = timezone.now().replace(hour=11, minute=0, second=0, microsecond=0) + dt.timedelta(days=1)
+                value['start_time'] = timezone.now().replace(hour=11,
+                                                             minute=0,
+                                                             second=0,
+                                                             microsecond=0) + dt.timedelta(days=1)
 
         if 'end_time' not in value.keys():
             value['end_time'] = value['start_time'] + dt.timedelta(hours=int(value['duration']))
         else:
             if value['end_time'] < value['start_time']:
-                raise serializers.ValidationError({"end_time": "End time cannot be before Start time"})
+                e = serializers.ValidationError({"end_time": "End time cannot be before Start time"})
+                capture_message(e)
+                raise e
 
-        value['ord_price'] = 0
+        client = Client.objects.get(id=self.root.initial_data['client'])
+        order_volume = 0
 
-        for pack in value['packages']:
-            pk_info = Package.objects.get(pkg_name=pack['pack_type'])
-            pack['pack_price'] = CalcService.calcOrderPrice(distance, pack, pk_info)
-            value['ord_price'] += pack['pack_price']
+        for idx, pack in enumerate(value['packages'], 1):
+            order_volume += pack['volume'] * pack['quantity']
+            pack['package_id'] = f"{value['order_id']}-{idx:02d}"
+        if client.price_calc == 0:
+            value['ord_price'] = client.base_price + (client.unit_price * order_volume)
+        else:
+            value['ord_price'] = client.base_price
+
+        value['ord_price'] = round(CalcService.calcOrderPrice(distance, value['ord_price'], client.distance_coef), 2)
+
         print('--- Tiempo de ejecucion Order_validate: {} segundos ---'.format((time.time() - start_time)))
         return value
 
@@ -415,7 +457,6 @@ class OrderSerializer(serializers.ModelSerializer):
         order = Order.objects.create(**validated_data)
         Origin.objects.create(order=order, **origin_data)
         Destination.objects.create(order=order, **dest_data)
- #       OrderStatus.objects.create(order=order, location=State.objects.get(city__unaccent__iexact=ValidateService.normalizeWord(origin_data['city'])))
         for pkg in pkg_data:
             OrderPackage.objects.create(order=order, **pkg)
         return order

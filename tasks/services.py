@@ -7,13 +7,28 @@ import requests
 import time
 import datetime as dt
 from rest_framework import serializers
-
+from sentry_sdk import capture_message
+from sentry_sdk import capture_exception
 
 class DataService(object):
 
     """ Class for declaring Service related functions.
 
     """
+    @staticmethod
+    def generateOrderId(order, client_code):
+        number = int(order.order_id[-6:])
+        alphabetic = order.order_id[2:4]
+        if number == 999999:
+            if alphabetic == 'ZZ':
+                serializers.ValidationError("Out of IDs")
+            elif alphabetic[1] == 'Z':
+                alphabetic = chr(ord(alphabetic[0])+1) + 'A'
+            else:
+                alphabetic = alphabetic[0] + chr(ord(alphabetic[1])+1)
+            return f"{client_code}{alphabetic}{0:06d}"
+        else:
+            return f"{client_code}{alphabetic}{number+1:06d}"
 
     @staticmethod
     def getOrigin():
@@ -153,7 +168,9 @@ class LocationService(object):
                         data['short'].update([(category, item['short_name'])])
                 data['location'] = geolist['geometry']['location']
         else:
-            raise serializers.ValidationError('GeoCoding Error: Could not parse coordinates')
+            e = serializers.ValidationError('GeoCoding Error: Could not parse coordinates')
+            capture_message(e)
+            raise e
 
         print('--- Tiempo de ejecucion getCoord: {} segundos ---'.format((time.time() - start_time)))
 
@@ -180,8 +197,9 @@ class LocationService(object):
             try:
                 response = gm.distance_matrix(ori.coords[::-1], dest.coords[::-1], mode="driving", departure_time=dt.datetime.now(), traffic_model="pessimistic")
                 distance = response.get('rows')[0].get('elements')[0].get('distance').get('value') / 1000
-            except Exception:
-                raise serializers.ValidationError("Error: Cannot calculate distance")
+            except Exception as e:
+                capture_exception(e)
+                raise e
 
         if distance < 51:
             deltime = 6
@@ -200,7 +218,7 @@ class LocationService(object):
 class CalcService(object):
 
     @staticmethod
-    def calcOrderPrice(km, package, pkgType):
+    def calcOrderPrice(km, price, coef):
 
         """ Calculate Delivery price
 
@@ -213,23 +231,11 @@ class CalcService(object):
         km = int(round(km))
         r = [1, 2, 3, 3]
         if km >= 100:
-            mult = int(km // 100 + 3)**pkgType.pkg_coef
+            mult = int(km // 100 + 3)**coef
         else:
-            mult = int(r[km // 25])**pkgType.pkg_coef
+            mult = int(r[km // 25])**coef
 
-        ''' DEPRECATED
-        if 10 < package.get('quantity') < 20:
-            disc += 0.1
-        elif 20 < package.get('quantity') < 30:
-            disc += 0.2
-        elif 30 < package.get('quantity') < 40:
-            disc += 0.3
-        elif 40 < package.get('quantity'):
-            disc += 0.4
-
-        base = pkgType.pkg_price - (pkgType.pkg_price * disc)
-        '''
-        total = package.get('pack_price') * mult
+        total = price * mult
 
         print('--- Tiempo de ejecucion calcPrice: {} segundos ---'.format((time.time() - start_time)))
 

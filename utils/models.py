@@ -12,29 +12,27 @@ import uuid
 # Create your models here.
 
 class Package(models.Model):
-    
-    PACKAGE_FIXED = ( 
-    (0, "Fixed"), 
-    (1, "Variable"), 
-)
-    pkg_name = models.CharField(max_length=20, unique=True)
-    pkg_code = models.CharField(max_length=2, unique=True)
-    pkg_description = models.CharField(max_length=100, null=True, blank=True)
-    pkg_fixed = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(1)])
-    height = models.FloatField(default=0, validators=[MinValueValidator(0)])
-    width = models.FloatField(default=0, validators=[MinValueValidator(0)])
-    length = models.FloatField(default=0, validators=[MinValueValidator(0)])
-    volume = models.FloatField(default=0, validators=[MinValueValidator(0)])
-    weight = models.FloatField(default=0, validators=[MinValueValidator(0)])
-    pkg_coef = models.FloatField(default=0, validators=[MinValueValidator(0)])
+
+    PACKAGE_FIXED = (
+        (0, "Fixed"),
+        (1, "Variable"),
+    )
+    pkg_name = models.CharField(max_length=20, unique=True, verbose_name='Package Name')
+    pkg_code = models.CharField(max_length=2, unique=True, verbose_name='Package Code')
+    pkg_description = models.CharField(max_length=100, null=True, blank=True, verbose_name='Package Description')
+    height = models.PositiveIntegerField(default=0, verbose_name='Height in mm')
+    width = models.PositiveIntegerField(default=0, verbose_name='Width in mm')
+    length = models.PositiveIntegerField(default=0, verbose_name='Length in mm')
+    volume = models.FloatField(default=0, validators=[MinValueValidator(0)], verbose_name='Volume in m3', editable=False)
+    weight = models.PositiveIntegerField(default=0, verbose_name='Weight in kg')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.pkg_name
-    
+
     def save(self, *args, **kwargs):
         if (self.height != 0) and (self.width != 0) and (self.length != 0):
-            self.volume = self.height * self.width * self.length
+            self.volume = (self.height * self.width * self.length) / (1000**3)
 
         super(Package, self).save(*args, **kwargs)
 
@@ -85,7 +83,7 @@ class Provider(models.Model):
     def __str__(self):
         """A string representation of the model."""
         return self.prov_name
-    
+
     def get_packgo():
         """Get packgo object
         Returns:
@@ -115,15 +113,15 @@ class Driver(models.Model):
 
 class Client(models.Model):
     # required fields
-    PRICE_CALC = ( 
-    (0, "Variable"), 
-    (1, "Fixed"), 
-)
-    PACKAGE_CAPACITY = ( 
-    (0, "Volume"), 
-    (1, "Weight"), 
-)
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    PRICE_CALC = (
+        (0, "Variable"),
+        (1, "Fixed"),
+    )
+    PACKAGE_CAPACITY = (
+        (0, "Volume"),
+        (1, "Weight"),
+    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name='Client ID')
     users = models.ManyToManyField(User)
     client_name = models.CharField(max_length=20, unique=True)
     client_code = models.CharField(max_length=2, unique=True)
@@ -132,6 +130,7 @@ class Client(models.Model):
     unit_type = models.PositiveIntegerField(default=0, choices=PACKAGE_CAPACITY)
     base_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
     unit_price = models.FloatField(default=0, validators=[MinValueValidator(0)])
+    distance_coef = models.FloatField(default=0, validators=[MinValueValidator(0)], verbose_name='Distance Coefficient')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
