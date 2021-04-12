@@ -16,9 +16,9 @@ class DataService(object):
 
     """
     @staticmethod
-    def generateOrderId(order, client_code):
-        number = int(order.order_id[-6:])
-        alphabetic = order.order_id[2:4]
+    def generateOrderId(order_id, client_code):
+        number = int(order_id[-6:])
+        alphabetic = order_id[2:4]
         if number == 999999:
             if alphabetic == 'ZZ':
                 serializers.ValidationError("Out of IDs")
