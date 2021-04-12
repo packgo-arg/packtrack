@@ -71,7 +71,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django_sentry_400_middleware.Sentry400CatchMiddleware',
+#    'django_sentry_400_middleware.Sentry400CatchMiddleware',
     'raven.contrib.django.raven_compat.middleware.Sentry404CatchMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
